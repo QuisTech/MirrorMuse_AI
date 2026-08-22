@@ -2,6 +2,8 @@
 > **Your Personal AI & AR Beauty Concierge**  
 > *Built for DevNetwork [API + Cloud + AI] Hackathon 2026 — Perfect Corp Sponsor Challenge Entry*
 
+🌐 **Live Production App**: [mirrormuse-ai.vercel.app](https://mirrormuse-ai.vercel.app)
+
 ---
 
 ## 🌟 Overview
