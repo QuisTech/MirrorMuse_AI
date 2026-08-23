@@ -10,6 +10,7 @@ import SkinAnalysisLab from "./components/SkinAnalysisLab";
 import GenAiLookComposer from "./components/GenAiLookComposer";
 import PerfectApiConsole from "./components/PerfectApiConsole";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
+import LivePriceSearch from "./components/LivePriceSearch";
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<
@@ -208,7 +209,10 @@ export default function App() {
         {/* 5. STOREFRONT MARKETPLACE MODULE */}
         {activeModule === "storefront" && (
           <div className="space-y-6 animate-fadeIn">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+            {/* Live SerpApi Google Shopping Market Price Search Engine */}
+            <LivePriceSearch />
+
+            <div className="flex items-center justify-between border-b border-white/[0.08] pb-4 pt-4">
               <div>
                 <h2 className="text-lg font-bold text-white">MirrorMuse AI Beauty & Hardware Marketplace</h2>
                 <p className="text-xs text-gray-400">Discover AR-compatible cosmetics and AI skin treatment products.</p>
