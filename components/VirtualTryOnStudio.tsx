@@ -228,20 +228,28 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
               />
             ) : (
               <img
-                src={userImage}
+                src={
+                  tryOnResult?.result_image_url ||
+                  tryOnResult?.output_url ||
+                  tryOnResult?.image_url ||
+                  tryOnResult?.data?.result_image_url ||
+                  userImage
+                }
                 alt="Live AR Viewport"
                 className="w-full h-full object-cover"
               />
             )}
 
-            {/* Simulated Live AR Overlay Shading */}
-            <div
-              className="absolute inset-0 pointer-events-none transition-all duration-300"
-              style={{
-                background: `radial-gradient(ellipse at 50% 65%, ${selectedShade.hex}${Math.round((opacity / 100) * 255).toString(16).padStart(2, '0')} 0%, transparent 45%)`,
-                mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light"
-              }}
-            />
+            {/* Live AR Shader (Applied when camera or preview active, hidden if API image rendered) */}
+            {!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url) && (
+              <div
+                className="absolute inset-0 pointer-events-none transition-all duration-300"
+                style={{
+                  background: `radial-gradient(ellipse at 50% 65%, ${selectedShade.hex}${Math.round((opacity / 100) * 255).toString(16).padStart(2, '0')} 0%, transparent 45%)`,
+                  mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light"
+                }}
+              />
+            )}
 
             {/* Landmark Radar Grid Overlay */}
             {showMesh && (
