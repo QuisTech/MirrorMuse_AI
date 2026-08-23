@@ -37,6 +37,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
   const [tryOnResult, setTryOnResult] = useState<any>(null);
   const [isExecutingTryOn, setIsExecutingTryOn] = useState<boolean>(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [capturedSnapImage, setCapturedSnapImage] = useState<string | null>(null);
 
   const shades: Record<string, ProductShade[]> = {
     lipstick: [
@@ -131,6 +132,33 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
       setTryOnResult(res);
     }
     setIsExecutingTryOn(false);
+  };
+
+  const handleSnapLook = () => {
+    if (cameraStream && videoRef.current) {
+      try {
+        const video = videoRef.current;
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const snapshotUrl = canvas.toDataURL("image/jpeg");
+          setCapturedSnapImage(snapshotUrl);
+        } else {
+          setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
+        }
+      } catch (e) {
+        console.warn("Webcam snapshot capture note:", e);
+        setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
+      }
+    } else {
+      setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
+    }
+    setIsCapturing(true);
   };
 
   const handleAddToCart = () => {
@@ -355,7 +383,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
 
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsCapturing(true)}
+                onClick={handleSnapLook}
                 className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-bold text-white flex items-center gap-2 cursor-pointer transition-all"
               >
                 <Camera className="w-4 h-4 text-pink-400" />
@@ -532,6 +560,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-inner group">
               <img
                 src={
+                  capturedSnapImage ||
                   tryOnResult?.result_image_url ||
                   tryOnResult?.output_url ||
                   tryOnResult?.data?.result_image_url ||
@@ -567,7 +596,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                 onClick={() => {
                   const link = document.createElement("a");
                   link.download = `MirrorMuse_Look_${selectedShade.sku}.jpg`;
-                  link.href = tryOnResult?.result_image_url || userImage;
+                  link.href = capturedSnapImage || tryOnResult?.result_image_url || userImage;
                   link.click();
                 }}
                 className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all"
