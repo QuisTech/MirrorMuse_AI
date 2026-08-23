@@ -1,9 +1,12 @@
-import React, { useState } from "react";
-import { Sparkles, Scan, CheckCircle2, AlertCircle, RefreshCw, ShoppingBag, ShieldCheck, ArrowRight, Activity, Zap } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, Scan, CheckCircle2, Upload, Camera, RefreshCw, ShoppingBag, ShieldCheck, ArrowRight, Activity, Zap } from "lucide-react";
 import { executeSkinAnalysis, SkinAnalysisResponse } from "../src/services/perfectCorp";
 
 export default function SkinAnalysisLab() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=80");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [analysisData, setAnalysisData] = useState<SkinAnalysisResponse>({
     compositeScore: 83,
     grade: "A+",
@@ -23,10 +26,23 @@ export default function SkinAnalysisLab() {
     ]
   });
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setUserImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleStartScan = async () => {
     setIsScanning(true);
     try {
-      const result = await executeSkinAnalysis();
+      const result = await executeSkinAnalysis(userImage);
       setAnalysisData(result);
     } catch (e) {
       console.error("Scan error:", e);
@@ -37,6 +53,15 @@ export default function SkinAnalysisLab() {
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept="image/*"
+        className="hidden"
+      />
+
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
         <div>
@@ -50,17 +75,27 @@ export default function SkinAnalysisLab() {
             </span>
           </div>
           <h2 className="text-xl font-bold text-white tracking-tight">AI Skin Analysis & Diagnostic Lab</h2>
-          <p className="text-xs text-gray-400">Deep neural diagnostic scanner evaluating key skin health parameters via live serverless backend proxy.</p>
+          <p className="text-xs text-gray-400">Upload your own photo or selfie to run a live dermatological analysis via Perfect Corp API.</p>
         </div>
 
-        <button
-          onClick={handleStartScan}
-          disabled={isScanning}
-          className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-        >
-          {isScanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
-          <span>{isScanning ? "Dispatching Live Perfect Corp API..." : "Run AI Skin Scanner"}</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-bold text-white flex items-center gap-2 cursor-pointer transition-all"
+          >
+            <Upload className="w-4 h-4 text-cyan-400" />
+            <span>Upload Your Photo / Selfie</span>
+          </button>
+
+          <button
+            onClick={handleStartScan}
+            disabled={isScanning}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+          >
+            {isScanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
+            <span>{isScanning ? "Analyzing Your Photo..." : "Run AI Skin Scanner"}</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Diagnostic Workspace */}
@@ -69,7 +104,7 @@ export default function SkinAnalysisLab() {
         <div className="lg:col-span-5 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 space-y-4 shadow-2xl relative">
           <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
             <img
-              src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=80"
+              src={userImage}
               alt="Skin Scan Subject"
               className={`w-full h-full object-cover transition-all duration-500 ${isScanning ? "brightness-125 contrast-125" : ""}`}
             />
@@ -109,7 +144,7 @@ export default function SkinAnalysisLab() {
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-cyan-400" />
                 <span className="font-bold text-white">
-                  {isScanning ? "Contacting Perfect Corp API..." : "Live API Diagnostic Verified"}
+                  {isScanning ? "Contacting Perfect Corp API..." : "Your Custom Photo Analysis Ready"}
                 </span>
               </div>
               <span className="text-[10px] font-mono text-gray-400">PERFECT_SKIN_AI</span>

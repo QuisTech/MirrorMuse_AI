@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Sparkles, Camera, Check, ShoppingCart, Sliders, Eye, RefreshCw, Layers, ShieldCheck, Heart } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, Camera, Check, ShoppingCart, Sliders, Eye, RefreshCw, Layers, ShieldCheck, Heart, Upload } from "lucide-react";
 
 interface ProductShade {
   name: string;
@@ -11,6 +11,9 @@ interface ProductShade {
 
 export default function VirtualTryOnStudio() {
   const [activeCategory, setActiveCategory] = useState<"lipstick" | "blush" | "eyeshadow" | "foundation" | "eyewear">("lipstick");
+  const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [selectedShade, setSelectedShade] = useState<ProductShade>({
     name: "Velvet Rose #402",
     hex: "#be123c",
@@ -53,6 +56,19 @@ export default function VirtualTryOnStudio() {
     ]
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setUserImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddToCart = () => {
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2500);
@@ -60,6 +76,15 @@ export default function VirtualTryOnStudio() {
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept="image/*"
+        className="hidden"
+      />
+
       {/* Module Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
         <div>
@@ -73,10 +98,18 @@ export default function VirtualTryOnStudio() {
             </span>
           </div>
           <h2 className="text-xl font-bold text-white tracking-tight">Interactive AR Virtual Try-On Studio</h2>
-          <p className="text-xs text-gray-400">Experience hyper-realistic lipstick, foundation, and accessory overlays with sub-14ms landmark alignment.</p>
+          <p className="text-xs text-gray-400">Experience hyper-realistic lipstick, foundation, and accessory overlays on sample models or your own photo.</p>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-pink-500/40 bg-pink-500/10 text-pink-300 hover:bg-pink-500/20 flex items-center gap-1.5 cursor-pointer shadow-lg"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Try On Your Photo / Selfie</span>
+          </button>
+
           <button
             onClick={() => setComparisonMode(!comparisonMode)}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
@@ -88,6 +121,7 @@ export default function VirtualTryOnStudio() {
             <Layers className="w-4 h-4" />
             <span>{comparisonMode ? "Split View Active" : "Before / After Split"}</span>
           </button>
+
           <button
             onClick={() => setShowMesh(!showMesh)}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
@@ -109,8 +143,8 @@ export default function VirtualTryOnStudio() {
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black flex items-center justify-center group">
             {/* Base Portrait Image */}
             <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80"
-              alt="Live AR Model Viewport"
+              src={userImage}
+              alt="Live AR Viewport"
               className="w-full h-full object-cover"
             />
 
@@ -156,7 +190,7 @@ export default function VirtualTryOnStudio() {
             {comparisonMode && (
               <div className="absolute inset-y-0 left-0 w-1/2 border-r-2 border-white/80 overflow-hidden bg-black">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80"
+                  src={userImage}
                   alt="Original Unmodified View"
                   className="w-[200%] h-full object-cover max-w-none"
                 />

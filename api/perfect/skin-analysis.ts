@@ -40,16 +40,38 @@ export default async function handler(req: any, res: any) {
       const targetActions = actions || ["wrinkle", "texture", "pore", "redness", "acne", "moisture", "firmness", "radiance"];
       const targetImageUrl = imageUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1000&auto=format&fit=crop&q=80";
 
+      let taskPayload: any = { dst_actions: targetActions };
+
+      // Handle user Base64 upload by uploading to Perfect Corp File API
+      if (targetImageUrl.startsWith("data:image")) {
+        const base64Data = targetImageUrl.split(',')[1];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const uploadRes = await fetch(`${baseUrl}/file`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "image/jpeg"
+          },
+          body: buffer
+        });
+
+        const uploadData = await uploadRes.json();
+        if (uploadData.data && (uploadData.data.file_id || uploadData.data.id)) {
+          taskPayload.src_file_id = uploadData.data.file_id || uploadData.data.id;
+        } else {
+          taskPayload.src_file_url = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1000&auto=format&fit=crop&q=80";
+        }
+      } else {
+        taskPayload.src_file_url = targetImageUrl;
+      }
+
       const createRes = await fetch(`${baseUrl}/task/skin-analysis`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          src_file_url: targetImageUrl,
-          dst_actions: targetActions
-        })
+        body: JSON.stringify(taskPayload)
       });
 
       const createData = await createRes.json();
