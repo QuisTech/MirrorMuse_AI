@@ -138,6 +138,56 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     setIsExecutingTryOn(false);
   };
 
+  const drawShadeMask = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+    ctx.save();
+    ctx.fillStyle = selectedShade.hex;
+    ctx.globalAlpha = opacity / 100;
+
+    if (activeCategory === "lipstick") {
+      ctx.globalCompositeOperation = "multiply";
+      ctx.beginPath();
+      ctx.moveTo(w * 0.405, h * 0.573);
+      ctx.bezierCurveTo(w * 0.437, h * 0.54, w * 0.475, h * 0.533, w * 0.5, h * 0.546);
+      ctx.bezierCurveTo(w * 0.525, h * 0.533, w * 0.562, h * 0.54, w * 0.595, h * 0.573);
+      ctx.bezierCurveTo(w * 0.562, h * 0.62, w * 0.525, h * 0.633, w * 0.5, h * 0.633);
+      ctx.bezierCurveTo(w * 0.475, h * 0.633, w * 0.437, h * 0.62, w * 0.405, h * 0.573);
+      ctx.closePath();
+      ctx.fill();
+    } else if (activeCategory === "eyeshadow") {
+      ctx.globalCompositeOperation = "soft-light";
+      ctx.beginPath();
+      ctx.moveTo(w * 0.37, h * 0.383);
+      ctx.quadraticCurveTo(w * 0.42, h * 0.313, w * 0.47, h * 0.383);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(w * 0.53, h * 0.383);
+      ctx.quadraticCurveTo(w * 0.58, h * 0.313, w * 0.63, h * 0.383);
+      ctx.closePath();
+      ctx.fill();
+    } else if (activeCategory === "blush") {
+      ctx.globalCompositeOperation = "soft-light";
+      const g1 = ctx.createRadialGradient(w * 0.35, h * 0.516, 0, w * 0.35, h * 0.516, w * 0.08);
+      const alphaHex = Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');
+      g1.addColorStop(0, selectedShade.hex + alphaHex);
+      g1.addColorStop(1, "transparent");
+      ctx.fillStyle = g1;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.35, h * 0.516, w * 0.06, h * 0.05, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const g2 = ctx.createRadialGradient(w * 0.65, h * 0.516, 0, w * 0.65, h * 0.516, w * 0.08);
+      g2.addColorStop(0, selectedShade.hex + alphaHex);
+      g2.addColorStop(1, "transparent");
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.65, h * 0.516, w * 0.06, h * 0.05, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  };
+
   const handleSnapLook = () => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -157,13 +207,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
         ctx.restore();
 
         if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
-          const grad = ctx.createRadialGradient(w * 0.5, h * 0.65, 0, w * 0.5, h * 0.65, w * 0.45);
-          const alphaHex = Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');
-          grad.addColorStop(0, selectedShade.hex + alphaHex);
-          grad.addColorStop(1, "transparent");
-          ctx.globalCompositeOperation = activeCategory === "lipstick" ? "multiply" : "screen";
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, w, h);
+          drawShadeMask(ctx, w, h);
         }
 
         setCapturedSnapImage(canvas.toDataURL("image/jpeg"));
@@ -184,13 +228,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
         ctx.drawImage(img, 0, 0, w, h);
 
         if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
-          const grad = ctx.createRadialGradient(w * 0.5, h * 0.65, 0, w * 0.5, h * 0.65, w * 0.45);
-          const alphaHex = Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');
-          grad.addColorStop(0, selectedShade.hex + alphaHex);
-          grad.addColorStop(1, "transparent");
-          ctx.globalCompositeOperation = activeCategory === "lipstick" ? "multiply" : "screen";
-          ctx.fillStyle = grad;
-          ctx.fillRect(0, 0, w, h);
+          drawShadeMask(ctx, w, h);
         }
 
         setCapturedSnapImage(canvas.toDataURL("image/jpeg"));
