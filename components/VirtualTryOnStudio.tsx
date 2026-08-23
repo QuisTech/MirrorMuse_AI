@@ -180,11 +180,11 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     if (activeCategory === "lipstick") {
       ctx.globalCompositeOperation = "multiply";
       ctx.beginPath();
-      ctx.moveTo(w * 0.47, h * 0.57);
-      ctx.bezierCurveTo(w * 0.48, h * 0.558, w * 0.49, h * 0.555, w * 0.5, h * 0.56);
-      ctx.bezierCurveTo(w * 0.51, h * 0.555, w * 0.52, h * 0.558, w * 0.53, h * 0.57);
-      ctx.bezierCurveTo(w * 0.52, h * 0.585, w * 0.51, h * 0.59, w * 0.5, h * 0.59);
-      ctx.bezierCurveTo(w * 0.49, h * 0.59, w * 0.48, h * 0.585, w * 0.47, h * 0.57);
+      ctx.moveTo(w * 0.485, h * 0.573);
+      ctx.bezierCurveTo(w * 0.49, h * 0.567, w * 0.495, h * 0.565, w * 0.5, h * 0.568);
+      ctx.bezierCurveTo(w * 0.505, h * 0.565, w * 0.51, h * 0.567, w * 0.515, h * 0.573);
+      ctx.bezierCurveTo(w * 0.51, h * 0.58, w * 0.505, h * 0.582, w * 0.5, h * 0.582);
+      ctx.bezierCurveTo(w * 0.495, h * 0.582, w * 0.49, h * 0.58, w * 0.485, h * 0.573);
       ctx.closePath();
       ctx.fill();
     } else if (activeCategory === "eyeshadow") {
@@ -424,10 +424,10 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                     </radialGradient>
                   </defs>
 
-                  {/* 1. LIPSTICK: Micro Anatomical Lip Polygon */}
+                  {/* 1. LIPSTICK: Ultra Micro Lip Polygon */}
                   {activeCategory === "lipstick" && (
                     <path
-                      d="M 188 171 C 192 168, 196 167, 200 168 C 204 167, 208 168, 212 171 C 208 176, 204 177, 200 177 C 196 177, 192 176, 188 171 Z"
+                      d="M 194 172 C 196 170, 198 169, 200 170 C 202 169, 204 170, 206 172 C 204 174, 202 175, 200 175 C 198 175, 196 174, 194 172 Z"
                       fill={selectedShade.hex}
                       fillOpacity={opacity / 100}
                       style={{ mixBlendMode: "multiply" }}
