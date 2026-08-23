@@ -224,7 +224,14 @@ export default function GenAiLookComposer() {
       {/* Active GenAI Render Output Stage */}
       <div className="rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center shadow-2xl">
         <div className="lg:col-span-6 relative aspect-square rounded-2xl overflow-hidden bg-black border border-white/10 group">
-          <img src={activeLook.image} alt={activeLook.title} className="w-full h-full object-cover" />
+          <img
+            src={activeLook.image}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1024&q=80";
+            }}
+            alt={activeLook.title}
+            className="w-full h-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-5 text-xs text-white">
             <span className="px-2.5 py-1 rounded-md bg-purple-600/80 backdrop-blur-md text-[10px] font-bold font-mono w-fit mb-2">
               GENAI_MODEL: PERFECT_LOOK_DIFFUSION_v3
