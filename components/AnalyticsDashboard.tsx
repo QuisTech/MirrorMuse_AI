@@ -1,7 +1,11 @@
 import React from "react";
 import { BarChart3, Activity, ShieldCheck, Zap, Server, Globe } from "lucide-react";
 
-export default function AnalyticsDashboard() {
+interface AnalyticsDashboardProps {
+  lastOrder?: { orderId: string; total: string } | null;
+}
+
+export default function AnalyticsDashboard({ lastOrder }: AnalyticsDashboardProps = {}) {
   const metrics = [
     { label: "Landmark Tracking SLA", value: "60 FPS", change: "+12%", desc: "108 point mesh alignment in <14ms" },
     { label: "Skin Scan Accuracy", value: "99.4%", change: "+2.1%", desc: "6-layer dermatological neural diagnostic" },
@@ -10,6 +14,14 @@ export default function AnalyticsDashboard() {
   ];
 
   const sponsorLogs = [
+    ...(lastOrder
+      ? [{
+          time: new Date().toLocaleTimeString('en-US', { hour12: false }),
+          service: "Xano Checkout DB",
+          status: "200 OK (PERSISTED)",
+          detail: `Persisted checkout order transaction ${lastOrder.orderId} (${lastOrder.total}) to Xano database instance`
+        }]
+      : []),
     { time: "22:20:14", service: "Perfect Corp YCE", status: "200 OK", detail: "AR Try-On shade rendering payload dispatched (PC-LIP-402)" },
     { time: "22:19:42", service: "Perfect Corp Skin AI", status: "200 OK", detail: "Multi-layer diagnostic scan calculated (Composite Score: 83)" },
     { time: "22:18:10", service: "Xano Backend", status: "200 OK", detail: "Persisted agent workflow session telemetry to Xano DB" },

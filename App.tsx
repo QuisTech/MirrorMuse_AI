@@ -400,7 +400,7 @@ export default function App() {
         )}
 
         {/* 9. TELEMETRY DASHBOARD MODULE */}
-        {activeModule === "dashboard" && <AnalyticsDashboard />}
+        {activeModule === "dashboard" && <AnalyticsDashboard lastOrder={orderSuccessDetails} />}
 
       </main>
 
