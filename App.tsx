@@ -48,6 +48,40 @@ export default function App() {
   ];
   const [activeCodeFile, setActiveCodeFile] = useState<string>("VirtualTryOnStudio.tsx");
 
+  const getAIConciergeResponse = (userText: string): string => {
+    const query = userText.toLowerCase();
+    if (query.includes("dry") || query.includes("routine") || query.includes("skin")) {
+      return "For dry epidermal skin, I recommend: 1) 3D Hyaluronic Acid Serum ($46.00) to restore T-Zone moisture deficit, 2) Ceramide Barrier Defense Cream ($58.00) to rebuild moisture barrier, and 3) Niacinamide Essence ($52.00) for smooth radiance.";
+    }
+    if (query.includes("lip") || query.includes("shade") || query.includes("lipstick") || query.includes("warm") || query.includes("color")) {
+      return "For warm skin undertones, try Velvet Rose #402 (Matte Satin, $34.00) or Coral Sunset #108 (Glossy Nude, $32.00). You can test them live on your laptop camera in the AR Try-On Studio!";
+    }
+    if (query.includes("price") || query.includes("buy") || query.includes("cost") || query.includes("serp")) {
+      return "You can search real-time retail prices from Sephora, Ulta, and Target in our API Console tab powered by SerpApi!";
+    }
+    return `Great question! Based on Perfect Corp AI Skin Diagnostics, I recommend combining hydrating skincare serums with custom lip shades. You can test your look in real-time in the AR Try-On tab!`;
+  };
+
+  const handleSendMessage = () => {
+    if (!chatInput.trim()) return;
+    const userMsg = chatInput;
+    setChatInput("");
+
+    setChatMessages((prev) => [
+      ...prev,
+      { role: "user", text: userMsg },
+      { role: "assistant", text: "Analyzing your request against Perfect Corp AI Skin Diagnostics..." }
+    ]);
+
+    setTimeout(() => {
+      const responseText = getAIConciergeResponse(userMsg);
+      setChatMessages((prev) => [
+        ...prev.slice(0, prev.length - 1),
+        { role: "assistant", text: responseText }
+      ]);
+    }, 600);
+  };
+
   return (
     <div className="min-h-screen bg-[#07090e] text-gray-100 font-sans selection:bg-pink-500 selection:text-white flex flex-col antialiased">
       {/* Global Top Announcement Bar */}
@@ -252,7 +286,7 @@ export default function App() {
             <div className="border-b border-white/[0.08] pb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-white">AI Beauty Concierge & Assistant Portal</h2>
-                <p className="text-xs text-gray-400">Autonomous LLM reasoning assistant for style and skincare guidance.</p>
+                <p className="text-xs text-gray-400">Autonomous reasoning assistant for style and skincare guidance.</p>
               </div>
             </div>
 
@@ -276,20 +310,12 @@ export default function App() {
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
                 placeholder="Ask AI Beauty Concierge e.g. Recommend a routine for dry skin..."
                 className="flex-1 px-4 py-3 rounded-xl bg-[#0d1017] border border-white/[0.08] text-xs text-white focus:outline-none focus:border-purple-500"
               />
               <button
-                onClick={() => {
-                  if (chatInput) {
-                    setChatMessages([
-                      ...chatMessages,
-                      { role: "user", text: chatInput },
-                      { role: "assistant", text: "Analyzing your request against Perfect Corp AI Skin Diagnostics..." }
-                    ]);
-                    setChatInput("");
-                  }
-                }}
+                onClick={handleSendMessage}
                 className="px-5 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-4 h-4" /> Send
