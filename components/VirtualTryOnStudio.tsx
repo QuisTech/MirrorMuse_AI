@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Sparkles, Camera, Check, ShoppingCart, Sliders, Eye, RefreshCw, Layers, ShieldCheck, Heart, Upload, Video, VideoOff } from "lucide-react";
+import {
+  Camera, Check, ShoppingCart, Sliders, Eye, Layers,
+  ShieldCheck, Heart, Upload, Video, VideoOff
+} from "lucide-react";
 import { executeVirtualTryOn } from "../src/services/perfectCorp";
 
 interface ProductShade {
@@ -14,834 +17,481 @@ interface VirtualTryOnStudioProps {
   onAddToCart?: (item?: { title: string; price: string; category: string; image?: string }) => void;
 }
 
+const SHADES: Record<string, ProductShade[]> = {
+  lipstick: [
+    { name: "Velvet Rose #402", hex: "#be123c", finish: "Matte Satin", sku: "PC-LIP-402", price: "$34.00" },
+    { name: "Crimson Empress #501", hex: "#9f1239", finish: "High Velvet", sku: "PC-LIP-501", price: "$36.00" },
+    { name: "Coral Sunset #108", hex: "#f43f5e", finish: "Glossy Nude", sku: "PC-LIP-108", price: "$32.00" },
+    { name: "Plum Noir #809", hex: "#701a75", finish: "Deep Satin", sku: "PC-LIP-809", price: "$38.00" },
+    { name: "Nude Elegance #004", hex: "#e11d48", finish: "Hydrating Sheer", sku: "PC-LIP-004", price: "$30.00" },
+  ],
+  blush: [
+    { name: "Peach Blossom #201", hex: "#fb923c", finish: "Radiant Sheer", sku: "PC-BLU-201", price: "$28.00" },
+    { name: "Rosy Radiance #204", hex: "#f472b6", finish: "Luminous Matte", sku: "PC-BLU-204", price: "$30.00" },
+    { name: "Warm Amber #209", hex: "#ea580c", finish: "Satin Glow", sku: "PC-BLU-209", price: "$29.00" },
+  ],
+  eyeshadow: [
+    { name: "Celestial Gold #301", hex: "#eab308", finish: "Shimmer Metallic", sku: "PC-EYE-301", price: "$42.00" },
+    { name: "Smoky Onyx #305", hex: "#334155", finish: "Matte Velvet", sku: "PC-EYE-305", price: "$40.00" },
+    { name: "Violet Nebula #309", hex: "#9333ea", finish: "Duochrome Sparkle", sku: "PC-EYE-309", price: "$45.00" },
+  ],
+  foundation: [
+    { name: "Warm Honey Shade 24W", hex: "#d97706", finish: "Natural Dewy", sku: "PC-FND-024", price: "$48.00" },
+    { name: "Cool Porcelain Shade 04C", hex: "#fde68a", finish: "Velvet Matte", sku: "PC-FND-004", price: "$48.00" },
+    { name: "Neutral Warmth Shade 18N", hex: "#b45309", finish: "Skin-Like Satin", sku: "PC-FND-018", price: "$48.00" },
+  ],
+  eyewear: [
+    { name: "Cat-Eye Gold Aviators", hex: "#ca8a04", finish: "Titanium Frame", sku: "PC-EYE-801", price: "$185.00" },
+    { name: "Cyberpunk Tinted Shield", hex: "#0284c7", finish: "UV400 Polarized", sku: "PC-EYE-902", price: "$210.00" },
+  ],
+};
+
+function getResultImageUrl(res: any): string | null {
+  if (!res) return null;
+  return (
+    res.result_image_url ||
+    res.output_url ||
+    res.image_url ||
+    res.data?.result_image_url ||
+    res.data?.output_url ||
+    null
+  );
+}
+
 export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioProps = {}) {
-  const [activeCategory, setActiveCategory] = useState<"lipstick" | "blush" | "eyeshadow" | "foundation" | "eyewear">("lipstick");
-  const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80");
+  const [activeCategory, setActiveCategory] = useState<keyof typeof SHADES>("lipstick");
+  const [userImage, setUserImage] = useState(
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80"
+  );
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [selectedShade, setSelectedShade] = useState(SHADES.lipstick[0]);
+  const [opacity, setOpacity] = useState(85);
+  const [showMesh, setShowMesh] = useState(true);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [tryOnResult, setTryOnResult] = useState<any>(null);
+  const [isExecutingTryOn, setIsExecutingTryOn] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [capturedSnapImage, setCapturedSnapImage] = useState<string | null>(null);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedShade, setSelectedShade] = useState<ProductShade>({
-    name: "Velvet Rose #402",
-    hex: "#be123c",
-    finish: "Matte Satin",
-    sku: "PC-LIP-402",
-    price: "$34.00"
-  });
-  const [opacity, setOpacity] = useState<number>(85);
-  const [showMesh, setShowMesh] = useState<boolean>(true);
-  const [isCapturing, setIsCapturing] = useState<boolean>(false);
-  const [comparisonMode, setComparisonMode] = useState<boolean>(false);
-  const [addedToCart, setAddedToCart] = useState<boolean>(false);
-  const [isFavorited, setIsFavorited] = useState<boolean>(false);
-  const [tryOnResult, setTryOnResult] = useState<any>(null);
-  const [isExecutingTryOn, setIsExecutingTryOn] = useState<boolean>(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [capturedSnapImage, setCapturedSnapImage] = useState<string | null>(null);
+  const hasApiImage = Boolean(getResultImageUrl(tryOnResult));
+  const displayImage = getResultImageUrl(tryOnResult) || userImage;
 
-  const shades: Record<string, ProductShade[]> = {
-    lipstick: [
-      { name: "Velvet Rose #402", hex: "#be123c", finish: "Matte Satin", sku: "PC-LIP-402", price: "$34.00" },
-      { name: "Crimson Empress #501", hex: "#9f1239", finish: "High Velvet", sku: "PC-LIP-501", price: "$36.00" },
-      { name: "Coral Sunset #108", hex: "#f43f5e", finish: "Glossy Nude", sku: "PC-LIP-108", price: "$32.00" },
-      { name: "Plum Noir #809", hex: "#701a75", finish: "Deep Satin", sku: "PC-LIP-809", price: "$38.00" },
-      { name: "Nude Elegance #004", hex: "#e11d48", finish: "Hydrating Sheer", sku: "PC-LIP-004", price: "$30.00" }
-    ],
-    blush: [
-      { name: "Peach Blossom #201", hex: "#fb923c", finish: "Radiant Sheer", sku: "PC-BLU-201", price: "$28.00" },
-      { name: "Rosy Radiance #204", hex: "#f472b6", finish: "Luminous Matte", sku: "PC-BLU-204", price: "$30.00" },
-      { name: "Warm Amber #209", hex: "#ea580c", finish: "Satin Glow", sku: "PC-BLU-209", price: "$29.00" }
-    ],
-    eyeshadow: [
-      { name: "Celestial Gold #301", hex: "#eab308", finish: "Shimmer Metallic", sku: "PC-EYE-301", price: "$42.00" },
-      { name: "Smoky Onyx #305", hex: "#334155", finish: "Matte Velvet", sku: "PC-EYE-305", price: "$40.00" },
-      { name: "Violet Nebula #309", hex: "#9333ea", finish: "Duochrome Sparkle", sku: "PC-EYE-309", price: "$45.00" }
-    ],
-    foundation: [
-      { name: "Warm Honey Shade 24W", hex: "#d97706", finish: "Natural Dewy", sku: "PC-FND-024", price: "$48.00" },
-      { name: "Cool Porcelain Shade 04C", hex: "#fde68a", finish: "Velvet Matte", sku: "PC-FND-004", price: "$48.00" },
-      { name: "Neutral Warmth Shade 18N", hex: "#b45309", finish: "Skin-Like Satin", sku: "PC-FND-018", price: "$48.00" }
-    ],
-    eyewear: [
-      { name: "Cat-Eye Gold Aviators", hex: "#ca8a04", finish: "Titanium Frame", sku: "PC-EYE-801", price: "$185.00" },
-      { name: "Cyberpunk Tinted Shield", hex: "#0284c7", finish: "UV400 Polarized", sku: "PC-EYE-902", price: "$210.00" }
-    ]
-  };
-
-  // Attach live camera stream to video DOM element whenever stream changes
   useEffect(() => {
     if (videoRef.current && cameraStream) {
       videoRef.current.srcObject = cameraStream;
-      videoRef.current.play().catch(err => console.warn("Video stream play note:", err));
+      videoRef.current.play().catch(() => { });
     }
   }, [cameraStream]);
 
-  // Toggle Live Laptop Camera
   const toggleLiveCamera = async () => {
     if (cameraStream) {
-      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream.getTracks().forEach((t) => t.stop());
       setCameraStream(null);
       setCameraError(null);
-    } else {
-      setCameraError(null);
-      try {
-        let stream: MediaStream;
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
-          });
-        } catch {
-          // Fallback to basic video constraint if strict resolution rejected
-          stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        }
-        setCameraStream(stream);
-      } catch (e: any) {
-        console.warn("Camera request note:", e);
-        setCameraError("Camera access blocked by browser permission or hardware in use. Click lock icon in browser URL bar to allow, or use sample portrait / upload photo.");
-      }
+      return;
     }
-  };
-
-  const normalizeAndSetUserImage = (rawUrl: string) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const targetW = 800;
-      const targetH = 600;
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext("2d");
-
-      if (ctx) {
-        const imgAspect = img.width / img.height;
-        const targetAspect = targetW / targetH;
-        let sx = 0, sy = 0, sw = img.width, sh = img.height;
-
-        if (imgAspect > targetAspect) {
-          sw = img.height * targetAspect;
-          sx = (img.width - sw) / 2;
-        } else {
-          sh = img.width / targetAspect;
-          sy = (img.height - sh) / 2;
-        }
-
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
-        setUserImage(canvas.toDataURL("image/jpeg", 0.92));
-      } else {
-        setUserImage(rawUrl);
+    setCameraError(null);
+    try {
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
       }
-    };
-    img.onerror = () => setUserImage(rawUrl);
-    img.src = rawUrl;
+      setCameraStream(stream);
+    } catch {
+      setCameraError(
+        "Camera blocked. Allow access in the browser address bar, or use Upload Photo / sample portrait."
+      );
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        setCameraStream(null);
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          normalizeAndSetUserImage(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((t) => t.stop());
+      setCameraStream(null);
     }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        setUserImage(reader.result);
+        setTryOnResult(null); // new photo → clear previous API result
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSelectShade = async (shade: ProductShade) => {
     setSelectedShade(shade);
     setIsExecutingTryOn(true);
-    const res = await executeVirtualTryOn({
-      imageUrl: userImage,
-      shadeSku: shade.sku,
-      shadeHex: shade.hex,
-      category: activeCategory
-    });
-    if (res) {
-      setTryOnResult(res);
-      const renderUrl = res.result_image_url || res.output_url || res.data?.result_image_url || res.data?.output_url;
-      if (renderUrl) {
-        setUserImage(renderUrl);
+    try {
+      const res = await executeVirtualTryOn({
+        imageUrl: userImage,
+        shadeSku: shade.sku,
+        shadeHex: shade.hex,
+        category: activeCategory,
+      });
+      if (res) {
+        setTryOnResult(res);
+        const url = getResultImageUrl(res);
+        if (url) setUserImage(url);
       }
+    } finally {
+      setIsExecutingTryOn(false);
     }
-    setIsExecutingTryOn(false);
-  };
-
-  const drawShadeMask = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    ctx.save();
-    ctx.fillStyle = selectedShade.hex;
-    ctx.globalAlpha = opacity / 100;
-
-    if (activeCategory === "lipstick") {
-      ctx.globalCompositeOperation = "multiply";
-      ctx.beginPath();
-      ctx.moveTo(w * 0.41, h * 0.57);
-      ctx.bezierCurveTo(w * 0.44, h * 0.54, w * 0.475, h * 0.533, w * 0.5, h * 0.546);
-      ctx.bezierCurveTo(w * 0.525, h * 0.533, w * 0.56, h * 0.54, w * 0.59, h * 0.57);
-      ctx.bezierCurveTo(w * 0.56, h * 0.62, w * 0.525, h * 0.633, w * 0.5, h * 0.633);
-      ctx.bezierCurveTo(w * 0.475, h * 0.633, w * 0.44, h * 0.62, w * 0.41, h * 0.57);
-      ctx.closePath();
-      ctx.fill();
-    } else if (activeCategory === "eyeshadow") {
-      ctx.globalCompositeOperation = "soft-light";
-      ctx.beginPath();
-      ctx.moveTo(w * 0.37, h * 0.383);
-      ctx.quadraticCurveTo(w * 0.42, h * 0.313, w * 0.47, h * 0.383);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.moveTo(w * 0.53, h * 0.383);
-      ctx.quadraticCurveTo(w * 0.58, h * 0.313, w * 0.63, h * 0.383);
-      ctx.closePath();
-      ctx.fill();
-    } else if (activeCategory === "blush") {
-      ctx.globalCompositeOperation = "soft-light";
-      const g1 = ctx.createRadialGradient(w * 0.35, h * 0.516, 0, w * 0.35, h * 0.516, w * 0.08);
-      const alphaHex = Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');
-      g1.addColorStop(0, selectedShade.hex + alphaHex);
-      g1.addColorStop(1, "transparent");
-      ctx.fillStyle = g1;
-      ctx.beginPath();
-      ctx.ellipse(w * 0.35, h * 0.516, w * 0.06, h * 0.05, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      const g2 = ctx.createRadialGradient(w * 0.65, h * 0.516, 0, w * 0.65, h * 0.516, w * 0.08);
-      g2.addColorStop(0, selectedShade.hex + alphaHex);
-      g2.addColorStop(1, "transparent");
-      ctx.fillStyle = g2;
-      ctx.beginPath();
-      ctx.ellipse(w * 0.65, h * 0.516, w * 0.06, h * 0.05, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
   };
 
   const handleSnapLook = () => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-
-    if (cameraStream && videoRef.current && ctx) {
+    // Prefer API image; otherwise snapshot current view source
+    if (cameraStream && videoRef.current) {
       try {
         const video = videoRef.current;
-        const w = video.videoWidth || 640;
-        const h = video.videoHeight || 480;
-        canvas.width = w;
-        canvas.height = h;
-
-        ctx.save();
-        ctx.translate(w, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(video, 0, 0, w, h);
-        ctx.restore();
-
-        if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
-          drawShadeMask(ctx, w, h);
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth || 640;
+        canvas.height = video.videoHeight || 480;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(video, 0, 0);
+          setCapturedSnapImage(canvas.toDataURL("image/jpeg", 0.92));
+        } else {
+          setCapturedSnapImage(displayImage);
         }
-
-        setCapturedSnapImage(canvas.toDataURL("image/jpeg"));
-        setIsCapturing(true);
-      } catch (e) {
-        console.warn("Webcam snapshot composite note:", e);
-        setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
-        setIsCapturing(true);
+      } catch {
+        setCapturedSnapImage(displayImage);
       }
-    } else if (ctx) {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const w = img.naturalWidth || 800;
-        const h = img.naturalHeight || 600;
-        canvas.width = w;
-        canvas.height = h;
-        ctx.drawImage(img, 0, 0, w, h);
-
-        if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
-          drawShadeMask(ctx, w, h);
-        }
-
-        setCapturedSnapImage(canvas.toDataURL("image/jpeg"));
-        setIsCapturing(true);
-      };
-      img.onerror = () => {
-        setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
-        setIsCapturing(true);
-      };
-      img.src = tryOnResult?.result_image_url || userImage;
     } else {
-      setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
-      setIsCapturing(true);
+      setCapturedSnapImage(displayImage);
     }
-  };
-
-  const handleDownloadPhoto = () => {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const exportCanvasImage = (source: HTMLVideoElement | HTMLImageElement, width: number, height: number, isVideo: boolean) => {
-      canvas.width = width;
-      canvas.height = height;
-
-      if (isVideo) {
-        ctx.save();
-        ctx.translate(width, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(source as HTMLVideoElement, 0, 0, width, height);
-        ctx.restore();
-      } else {
-        ctx.drawImage(source as HTMLImageElement, 0, 0, width, height);
-      }
-
-      if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
-        ctx.save();
-        ctx.fillStyle = selectedShade.hex;
-        ctx.globalAlpha = opacity / 100;
-
-        if (activeCategory === "lipstick") {
-          ctx.globalCompositeOperation = "multiply";
-          ctx.beginPath();
-          ctx.moveTo(width * 0.41, height * 0.57);
-          ctx.bezierCurveTo(width * 0.44, height * 0.54, width * 0.475, height * 0.533, width * 0.5, height * 0.546);
-          ctx.bezierCurveTo(width * 0.525, height * 0.533, width * 0.56, height * 0.54, width * 0.59, height * 0.57);
-          ctx.bezierCurveTo(width * 0.56, height * 0.62, width * 0.525, height * 0.633, width * 0.5, height * 0.633);
-          ctx.bezierCurveTo(width * 0.475, height * 0.633, width * 0.44, height * 0.62, width * 0.41, height * 0.57);
-          ctx.closePath();
-          ctx.fill();
-        } else if (activeCategory === "eyeshadow") {
-          ctx.globalCompositeOperation = "source-over";
-          ctx.beginPath();
-          ctx.ellipse(width * 0.42, height * 0.38, width * 0.04, height * 0.02, 0, 0, Math.PI * 2);
-          ctx.ellipse(width * 0.58, height * 0.38, width * 0.04, height * 0.02, 0, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (activeCategory === "blush") {
-          ctx.globalCompositeOperation = "source-over";
-          ctx.beginPath();
-          ctx.ellipse(width * 0.35, height * 0.52, width * 0.06, height * 0.03, 0, 0, Math.PI * 2);
-          ctx.ellipse(width * 0.65, height * 0.52, width * 0.06, height * 0.03, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-      }
-
-      const link = document.createElement("a");
-      link.download = `MirrorMuse_Look_${selectedShade.sku || "Custom"}.jpg`;
-      link.href = canvas.toDataURL("image/jpeg", 0.95);
-      link.click();
-    };
-
-    if (cameraStream && videoRef.current) {
-      const v = videoRef.current;
-      exportCanvasImage(v, v.videoWidth || 800, v.videoHeight || 600, true);
-    } else {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => exportCanvasImage(img, img.naturalWidth || 800, img.naturalHeight || 600, false);
-      img.onerror = () => {
-        const link = document.createElement("a");
-        link.download = `MirrorMuse_Look_${selectedShade.sku || "Custom"}.jpg`;
-        link.href = capturedSnapImage || userImage;
-        link.click();
-      };
-      img.src = userImage;
-    }
+    setIsCapturing(true);
   };
 
   const handleAddToCart = () => {
     setAddedToCart(true);
-    if (onAddToCart) {
-      onAddToCart({
-        title: selectedShade.name,
-        price: selectedShade.price,
-        category: "AR Cosmetic Shade",
-        image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80"
-      });
-    }
-    setTimeout(() => setAddedToCart(false), 2500);
+    onAddToCart?.({
+      title: selectedShade.name,
+      price: selectedShade.price,
+      category: "AR Cosmetic Shade",
+      image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80",
+    });
+    setTimeout(() => setAddedToCart(false), 2000);
   };
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Hidden File Input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileUpload}
-        accept="image/*"
-        className="hidden"
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
 
-      {/* Module Header */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-300 text-[10px] font-bold uppercase tracking-wider">
-              PERFECT CORP AR TRY-ON ENGINE v4.2
+            <span className="px-2.5 py-0.5 rounded-full bg-pink-500/20 border border-pink-500/30 text-pink-300 text-[10px] font-bold uppercase tracking-wider">
+              Perfect Corp AR Try-On
             </span>
             <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              60 FPS GPU ACCELERATED
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Live
             </span>
           </div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Interactive AR Virtual Try-On Studio</h2>
-          <p className="text-xs text-gray-400">Experience real-time webcam AR try-on, upload your photo, or test with sample models.</p>
+          <h2 className="text-xl font-bold text-white tracking-tight">Virtual Try-On Studio</h2>
+          <p className="text-xs text-gray-400">Webcam, upload, or sample — shade try-on via Perfect Corp when available.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={toggleLiveCamera}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer shadow-lg ${
-              cameraStream
-                ? "bg-rose-600 border-rose-500 text-white animate-pulse"
-                : "bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-500 text-white hover:opacity-90"
-            }`}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-2 cursor-pointer ${cameraStream
+                ? "bg-rose-600 border-rose-500 text-white"
+                : "bg-indigo-600 border-indigo-500 text-white"
+              }`}
           >
             {cameraStream ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
-            <span>{cameraStream ? "Turn Off Live Camera" : "Enable Live Laptop Camera"}</span>
+            {cameraStream ? "Stop Camera" : "Live Camera"}
           </button>
-
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-pink-500/40 bg-pink-500/10 text-pink-300 hover:bg-pink-500/20 flex items-center gap-1.5 cursor-pointer shadow-lg"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold border border-pink-500/40 bg-pink-500/10 text-pink-300 flex items-center gap-1.5 cursor-pointer"
           >
-            <Upload className="w-4 h-4" />
-            <span>Upload Photo</span>
+            <Upload className="w-4 h-4" /> Upload
           </button>
-
           <button
             onClick={() => setComparisonMode(!comparisonMode)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
-              comparisonMode
-                ? "bg-purple-600 border-purple-500 text-white shadow-lg"
-                : "bg-white/[0.05] border-white/[0.1] text-gray-300 hover:text-white"
-            }`}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer ${comparisonMode ? "bg-purple-600 border-purple-500 text-white" : "border-white/10 text-gray-300"
+              }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>{comparisonMode ? "Split View Active" : "Before / After Split"}</span>
+            <Layers className="w-4 h-4" /> Split
           </button>
-
           <button
             onClick={() => setShowMesh(!showMesh)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
-              showMesh
-                ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300"
-                : "bg-white/[0.05] border-white/[0.1] text-gray-400"
-            }`}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 cursor-pointer ${showMesh ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300" : "border-white/10 text-gray-400"
+              }`}
           >
-            <Eye className="w-4 h-4" />
-            <span>{showMesh ? "Mesh Visible" : "Hide Mesh"}</span>
+            <Eye className="w-4 h-4" /> Mesh
           </button>
         </div>
       </div>
 
-      {/* Main Studio Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left: Interactive AR Camera Viewport */}
-        <div className="lg:col-span-8 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 relative overflow-hidden shadow-2xl space-y-4">
-          {/* Camera Access Error Warning Banner */}
+        {/* Viewport */}
+        <div className="lg:col-span-8 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 space-y-4">
           {cameraError && (
-            <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between animate-fadeIn font-medium">
-              <span>⚠️ {cameraError}</span>
-              <button
-                onClick={() => setCameraError(null)}
-                className="text-amber-400 font-bold hover:underline ml-2 text-[10px] uppercase cursor-pointer"
-              >
+            <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex justify-between gap-2">
+              <span>{cameraError}</span>
+              <button onClick={() => setCameraError(null)} className="font-bold underline cursor-pointer shrink-0">
                 Dismiss
               </button>
             </div>
           )}
 
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black flex items-center justify-center group">
-            {/* Live Camera Video Feed or Base Portrait Image */}
+          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black">
             {cameraStream ? (
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                onCanPlay={(e) => e.currentTarget.play()}
-                onLoadedMetadata={(e) => e.currentTarget.play()}
-                className="w-full h-full object-cover transform -scale-x-100"
+                className="w-full h-full object-cover -scale-x-100"
               />
             ) : (
-              <img
-                src={
-                  tryOnResult?.result_image_url ||
-                  tryOnResult?.output_url ||
-                  tryOnResult?.image_url ||
-                  tryOnResult?.data?.result_image_url ||
-                  userImage
-                }
-                alt="Live AR Viewport"
-                className="w-full h-full object-cover"
+              <img src={displayImage} alt="Try-on viewport" className="w-full h-full object-cover" />
+            )}
+
+            {/* Simple tint only when no real Perfect Corp image */}
+            {!hasApiImage && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: `radial-gradient(ellipse at 50% 62%, ${selectedShade.hex}${Math.round(
+                    (opacity / 100) * 180
+                  )
+                    .toString(16)
+                    .padStart(2, "0")} 0%, transparent 42%)`,
+                  mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light",
+                }}
               />
             )}
 
-            {/* Targeted Anatomical SVG AR Shader Overlay (Lipstick on lips ONLY, Eyeshadow on lids, Blush on cheeks) */}
-            {!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url) && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <svg className="w-full h-full" viewBox="0 0 400 300">
-                  <defs>
-                    <radialGradient id="blushLeftGrad">
-                      <stop offset="0%" stopColor={selectedShade.hex} stopOpacity={opacity / 100} />
-                      <stop offset="100%" stopColor={selectedShade.hex} stopOpacity="0" />
-                    </radialGradient>
-                    <radialGradient id="blushRightGrad">
-                      <stop offset="0%" stopColor={selectedShade.hex} stopOpacity={opacity / 100} />
-                      <stop offset="100%" stopColor={selectedShade.hex} stopOpacity="0" />
-                    </radialGradient>
-                  </defs>
-
-                  {/* 1. LIPSTICK: Full Anatomical Lip Polygon */}
-                  {activeCategory === "lipstick" && (
-                    <path
-                      d="M 165 172 C 175 162, 190 160, 200 164 C 210 160, 225 162, 235 172 C 225 186, 210 190, 200 190 C 190 190, 175 186, 165 172 Z"
-                      fill={selectedShade.hex}
-                      fillOpacity={opacity / 100}
-                      style={{ mixBlendMode: "multiply" }}
-                    />
-                  )}
-
-                  {/* 2. EYESHADOW: Precise Eyelid Arches */}
-                  {activeCategory === "eyeshadow" && (
-                    <g style={{ mixBlendMode: "soft-light" }}>
-                      <path d="M 148 115 Q 168 94 188 115 Z" fill={selectedShade.hex} fillOpacity={opacity / 100} />
-                      <path d="M 212 115 Q 232 94 252 115 Z" fill={selectedShade.hex} fillOpacity={opacity / 100} />
-                    </g>
-                  )}
-
-                  {/* 3. BLUSH: Precise Cheekbone Blurs */}
-                  {activeCategory === "blush" && (
-                    <g style={{ mixBlendMode: "soft-light" }}>
-                      <ellipse cx="140" cy="155" rx="24" ry="16" fill="url(#blushLeftGrad)" />
-                      <ellipse cx="260" cy="155" rx="24" ry="16" fill="url(#blushRightGrad)" />
-                    </g>
-                  )}
-
-                  {/* 4. EYEWEAR: Designer Frame Overlay */}
-                  {activeCategory === "eyewear" && (
-                    <g stroke={selectedShade.hex} strokeWidth="3" fill="none" opacity={opacity / 100}>
-                      <rect x="142" y="100" width="48" height="32" rx="10" fill={selectedShade.hex + "33"} />
-                      <rect x="210" y="100" width="48" height="32" rx="10" fill={selectedShade.hex + "33"} />
-                      <line x1="190" y1="112" x2="210" y2="112" strokeWidth="2.5" />
-                    </g>
-                  )}
-                </svg>
+            {/* Optional light mesh guide — only without API image */}
+            {showMesh && !hasApiImage && (
+              <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 border border-white/10 text-[10px] font-mono text-indigo-300 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                {cameraStream ? "CAMERA LIVE" : "PREVIEW MODE"}
               </div>
             )}
 
-            {/* Landmark Radar Grid Overlay (Suppressed if API image rendered) */}
-            {showMesh && !(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url) && (
-              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                <svg className="w-full h-full text-indigo-400/50" viewBox="0 0 400 300">
-                  {/* Face Mesh Contour Lines */}
-                  <ellipse cx="200" cy="130" rx="75" ry="95" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
-                  <path d="M 155 115 Q 200 98 245 115" fill="none" stroke="currentColor" strokeWidth="1" />
-                  
-                  {/* Eye Landmarks */}
-                  <circle cx="168" cy="115" r="12" fill="none" stroke="#a855f7" strokeWidth="1" />
-                  <circle cx="232" cy="115" r="12" fill="none" stroke="#a855f7" strokeWidth="1" />
-                  <circle cx="168" cy="115" r="4" fill="#38bdf8" />
-                  <circle cx="232" cy="115" r="4" fill="#38bdf8" />
-
-                  {/* Nose Mesh */}
-                  <path d="M 200 115 L 194 148 L 206 148 Z" fill="none" stroke="#38bdf8" strokeWidth="1" />
-                  
-                  {/* Lip Landmarks */}
-                  <path d="M 172 172 Q 200 160 228 172 Q 200 190 172 172 Z" fill="none" stroke="#ec4899" strokeWidth="1.5" />
-                  
-                  {/* Landmark Tracking Nodes */}
-                  {[
-                    [168, 115], [232, 115], [200, 148], [172, 172], [228, 172], [200, 164], [200, 180],
-                    [148, 130], [252, 130], [182, 85], [218, 85], [190, 115], [210, 115]
-                  ].map(([x, y], idx) => (
-                    <circle key={idx} cx={x} cy={y} r="2.5" fill="#38bdf8" />
-                  ))}
-                </svg>
-                <div className="absolute top-4 left-4 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-indigo-300 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{cameraStream ? "WEBRTC_CAMERA: LIVE STREAMING 60FPS" : "PERFECT_AR_TRACKING: 108 LANDMARKS ALIGNED"}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Split Comparison View */}
             {comparisonMode && !cameraStream && (
               <div className="absolute inset-y-0 left-0 w-1/2 border-r-2 border-white/80 overflow-hidden bg-black">
-                <img
-                  src={userImage}
-                  alt="Original Unmodified View"
-                  className="w-[200%] h-full object-cover max-w-none"
-                />
-                <span className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-black/80 text-[10px] font-bold text-gray-300">
+                <img src={userImage} alt="Original" className="w-[200%] h-full object-cover max-w-none" />
+                <span className="absolute bottom-3 left-3 px-2 py-1 rounded bg-black/80 text-[10px] font-bold text-gray-300">
                   ORIGINAL
                 </span>
               </div>
             )}
 
-            {/* Active Shade Badge Indicator */}
-            <div className="absolute bottom-4 right-4 px-4 py-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 flex items-center gap-3 text-xs">
-              <span className="w-4 h-4 rounded-full border border-white/40" style={{ backgroundColor: selectedShade.hex }} />
+            <div className="absolute bottom-3 right-3 px-3 py-2 rounded-xl bg-black/80 border border-white/10 flex items-center gap-2 text-xs">
+              <span className="w-3.5 h-3.5 rounded-full border border-white/40" style={{ backgroundColor: selectedShade.hex }} />
               <div>
                 <p className="font-bold text-white leading-tight">{selectedShade.name}</p>
-                <p className="text-[10px] text-gray-400">{selectedShade.finish} • {selectedShade.price}</p>
+                <p className="text-[10px] text-gray-400">{selectedShade.finish}</p>
               </div>
             </div>
           </div>
 
-          {/* Quick HUD Controls */}
-          <div className="p-4 rounded-2xl bg-[#0d1017] border border-white/[0.08] flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4 flex-1 min-w-[240px]">
-              <Sliders className="w-4 h-4 text-indigo-400" />
+          {/* Controls */}
+          <div className="p-4 rounded-2xl bg-[#0d1017] border border-white/[0.08] flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-[200px]">
+              <Sliders className="w-4 h-4 text-indigo-400 shrink-0" />
               <div className="flex-1 space-y-1">
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-400 font-medium">Shade Pigment Opacity</span>
-                  <span className="text-indigo-400 font-bold font-mono">{opacity}%</span>
+                  <span className="text-gray-400">Opacity</span>
+                  <span className="text-indigo-400 font-mono">{opacity}%</span>
                 </div>
                 <input
                   type="range"
-                  min="20"
-                  max="100"
+                  min={20}
+                  max={100}
                   value={opacity}
                   onChange={(e) => setOpacity(Number(e.target.value))}
-                  className="w-full h-1.5 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  className="w-full h-1.5 accent-indigo-500 cursor-pointer"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleSnapLook}
-                className="px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-bold text-white flex items-center gap-2 cursor-pointer transition-all"
-              >
-                <Camera className="w-4 h-4 text-pink-400" />
-                <span>Snap Look</span>
-              </button>
+            <button
+              onClick={handleSnapLook}
+              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-bold text-white flex items-center gap-2 cursor-pointer"
+            >
+              <Camera className="w-4 h-4 text-pink-400" /> Snap
+            </button>
+            <button
+              onClick={handleAddToCart}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-indigo-600 text-white text-xs font-bold flex items-center gap-2 cursor-pointer"
+            >
+              {addedToCart ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+              {addedToCart ? "Added" : "Add to Cart"}
+            </button>
 
-              <button
-                onClick={handleAddToCart}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 text-white font-bold text-xs shadow-lg shadow-pink-500/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                {addedToCart ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
-                <span>{addedToCart ? "Added to Cart!" : "Add Shade to Cart"}</span>
-              </button>
-            </div>
-
-            {/* Live Perfect Corp YCE API Status Badge */}
-            <div className="p-3 rounded-2xl bg-[#0d1017] border border-indigo-500/30 flex items-center justify-between text-xs font-mono">
+            <div className="w-full p-2.5 rounded-xl bg-black/40 border border-indigo-500/30 flex items-center justify-between text-[11px] font-mono">
               <div className="flex items-center gap-2">
-                <span className={`w-2.5 h-2.5 rounded-full ${isExecutingTryOn ? "bg-amber-400 animate-ping" : "bg-emerald-400 animate-pulse"}`} />
-                <span className="text-gray-300 font-bold">PERFECT CORP YCE API:</span>
-                <span className="text-emerald-400 font-bold">
-                  {isExecutingTryOn ? "DISPATCHING TASK..." : (tryOnResult ? "200 OK (S2S TASK SUCCESS)" : "ACTIVE S2S v2.0 READY")}
+                <span
+                  className={`w-2 h-2 rounded-full ${isExecutingTryOn ? "bg-amber-400 animate-ping" : "bg-emerald-400"
+                    }`}
+                />
+                <span className="text-gray-400">YCE:</span>
+                <span className="text-emerald-400">
+                  {isExecutingTryOn
+                    ? "Dispatching…"
+                    : tryOnResult
+                      ? hasApiImage
+                        ? "Live render"
+                        : "Response OK"
+                      : "Ready"}
                 </span>
               </div>
               {tryOnResult?.task_id && (
-                <span className="text-indigo-300 text-[10px] bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30 font-bold">
-                  TASK: {tryOnResult.task_id}
+                <span className="text-indigo-300 truncate max-w-[140px]">
+                  {String(tryOnResult.task_id).slice(0, 16)}…
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right: Category Tabs & Color Selector */}
-        <div className="lg:col-span-4 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-5 space-y-5">
+        {/* Shade panel */}
+        <div className="lg:col-span-4 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-5 space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-1">Select AR Category</h3>
-            <p className="text-xs text-gray-400">Choose cosmetic product type for instant rendering.</p>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Category</h3>
+            <p className="text-xs text-gray-400">Pick a product type, then a shade.</p>
           </div>
 
-          {/* Category Switcher */}
-          <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-black/60 border border-white/[0.08] text-xs">
-            {[
-              { id: "lipstick", label: "Lipstick" },
-              { id: "blush", label: "Blush" },
-              { id: "eyeshadow", label: "Eyeshadow" },
-              { id: "foundation", label: "Foundation" },
-              { id: "eyewear", label: "Eyewear" }
-            ].map((cat) => (
+          <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-black/60 border border-white/[0.08] text-[11px]">
+            {(Object.keys(SHADES) as (keyof typeof SHADES)[]).map((id) => (
               <button
-                key={cat.id}
+                key={id}
                 onClick={() => {
-                  setActiveCategory(cat.id as any);
-                  setSelectedShade(shades[cat.id][0]);
+                  setActiveCategory(id);
+                  setSelectedShade(SHADES[id][0]);
+                  setTryOnResult(null);
                 }}
-                className={`py-2 rounded-lg font-bold transition-all text-center cursor-pointer ${
-                  activeCategory === cat.id
-                    ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md"
+                className={`py-2 rounded-lg font-bold capitalize cursor-pointer ${activeCategory === id
+                    ? "bg-indigo-600 text-white"
                     : "text-gray-400 hover:text-white"
-                }`}
+                  }`}
               >
-                {cat.label}
+                {id}
               </button>
             ))}
           </div>
 
-          {/* Color Swatch Selector Grid */}
-          <div className="space-y-3 pt-2">
-            <label className="text-xs font-bold text-gray-300 uppercase tracking-wider flex items-center justify-between">
-              <span>Color Swatches ({shades[activeCategory].length})</span>
-              <span className="text-[10px] text-indigo-400 font-mono">PERFECT_SHADE_MATCH</span>
-            </label>
-
-            <div className="space-y-2">
-              {shades[activeCategory].map((shade) => {
-                const isSelected = selectedShade.sku === shade.sku;
-                return (
-                  <button
-                    key={shade.sku}
-                    onClick={() => handleSelectShade(shade)}
-                    className={`w-full p-3 rounded-2xl transition-all cursor-pointer border flex items-center justify-between text-left ${
-                      isSelected
-                        ? "bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border-indigo-500/60 shadow-lg"
-                        : "bg-[#0d1017] border-white/[0.06] hover:border-white/20 hover:bg-white/[0.02]"
+          <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+            {SHADES[activeCategory].map((shade) => {
+              const selected = selectedShade.sku === shade.sku;
+              return (
+                <button
+                  key={shade.sku}
+                  onClick={() => handleSelectShade(shade)}
+                  disabled={isExecutingTryOn}
+                  className={`w-full p-3 rounded-2xl border text-left flex items-center gap-3 cursor-pointer transition-all ${selected
+                      ? "border-indigo-500/60 bg-indigo-900/30"
+                      : "border-white/[0.06] bg-[#0d1017] hover:border-white/20"
                     }`}
+                >
+                  <span
+                    className="w-7 h-7 rounded-xl border border-white/30 shrink-0 flex items-center justify-center"
+                    style={{ backgroundColor: shade.hex }}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className="w-7 h-7 rounded-xl border border-white/30 shadow-inner flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: shade.hex }}
-                        >
-                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                        </span>
-                        <div>
-                          <p className={`text-xs font-bold ${isSelected ? "text-white" : "text-gray-300"}`}>
-                            {shade.name}
-                          </p>
-                          <p className="text-[10px] text-gray-400 font-mono">{shade.finish} • SKU: {shade.sku}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs font-bold text-amber-400">{shade.price}</span>
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedShade(shade);
-                            if (onAddToCart) {
-                              onAddToCart({
-                                title: shade.name,
-                                price: shade.price,
-                                category: "AR Cosmetic Shade",
-                                image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80"
-                              });
-                            }
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-[11px] font-bold cursor-pointer transition-all hover:scale-105"
-                        >
-                          + Add
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                    {selected && <Check className="w-3.5 h-3.5 text-white" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-xs font-bold truncate ${selected ? "text-white" : "text-gray-300"}`}>
+                      {shade.name}
+                    </p>
+                    <p className="text-[10px] text-gray-500 font-mono">{shade.finish}</p>
+                  </div>
+                  <span className="text-xs font-bold text-amber-400 shrink-0">{shade.price}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Active Product Details Card */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/60 via-[#0e121d] to-purple-950/60 border border-indigo-500/30 space-y-3">
+          <div className="p-3 rounded-2xl border border-indigo-500/30 bg-indigo-950/40 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" /> PERFECT CORP VERIFIED
+              <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> Perfect Corp
               </span>
               <button
                 onClick={() => setIsFavorited(!isFavorited)}
-                className={`text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                  isFavorited ? "text-pink-400 font-extrabold" : "text-gray-400 hover:text-pink-300"
-                }`}
+                className={`text-xs flex items-center gap-1 cursor-pointer ${isFavorited ? "text-pink-400" : "text-gray-400"
+                  }`}
               >
-                <Heart className={`w-3.5 h-3.5 ${isFavorited ? "fill-pink-400 text-pink-400 animate-bounce" : ""}`} />
-                <span>{isFavorited ? "Favorited!" : "Favorite"}</span>
+                <Heart className={`w-3.5 h-3.5 ${isFavorited ? "fill-pink-400" : ""}`} />
+                {isFavorited ? "Saved" : "Save"}
               </button>
             </div>
-            <div>
-              <p className="text-xs font-bold text-white">{selectedShade.name}</p>
-              <p className="text-[11px] text-gray-300 leading-relaxed mt-1">
-                Formulated with ultra-hydrating hyaluronic spheres and dynamic micro-pigments for 12-hour high-impact wear.
-              </p>
-            </div>
+            <p className="text-xs font-bold text-white">{selectedShade.name}</p>
+            <p className="text-[11px] text-gray-400 leading-relaxed">
+              Select a shade to dispatch try-on. Live render appears when the API returns an image.
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Snap Look Capture Modal */}
+      {/* Snap modal */}
       {isCapturing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="w-full max-w-lg bg-[#0d1017] border border-pink-500/40 rounded-3xl p-6 shadow-2xl space-y-5 relative">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div className="flex items-center gap-2">
-                <Camera className="w-5 h-5 text-pink-400" />
-                <h3 className="text-base font-bold text-white tracking-tight">AR Look Snapshot Captured</h3>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[#0d1017] border border-pink-500/40 rounded-3xl p-5 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Camera className="w-4 h-4 text-pink-400" /> Snapshot
+              </h3>
               <button
                 onClick={() => setIsCapturing(false)}
-                className="text-gray-400 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer"
+                className="text-xs text-gray-400 hover:text-white cursor-pointer"
               >
-                ✕ Close
+                Close
               </button>
             </div>
-
-            {/* Captured Look Canvas Preview */}
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-inner group">
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-white/10">
               <img
-                src={
-                  capturedSnapImage ||
-                  tryOnResult?.result_image_url ||
-                  tryOnResult?.output_url ||
-                  tryOnResult?.data?.result_image_url ||
-                  userImage
-                }
-                alt="Captured Snapshot"
+                src={capturedSnapImage || displayImage}
+                alt="Snapshot"
                 className="w-full h-full object-cover"
               />
-              {!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url) && (
-                <div
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    background: `radial-gradient(ellipse at 50% 65%, ${selectedShade.hex}${Math.round((opacity / 100) * 255).toString(16).padStart(2, '0')} 0%, transparent 45%)`,
-                    mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light"
-                  }}
-                />
-              )}
-              <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-[10px] font-mono text-white flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>PERFECT_SNAP_ID: {selectedShade.sku}-{Date.now().toString().slice(-4)}</span>
-              </div>
             </div>
-
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
-              <div>
-                <p className="font-bold text-white">{selectedShade.name}</p>
-                <p className="text-[11px] text-gray-400">Finish: {selectedShade.finish} • Opacity: {opacity}%</p>
-              </div>
-              <span className="font-extrabold text-pink-400 font-mono">{selectedShade.price}</span>
-            </div>
-
-            {/* Modal Actions */}
-            <div className="flex items-center gap-3 pt-2">
+            <p className="text-xs text-gray-400">
+              {selectedShade.name} · {selectedShade.finish}
+            </p>
+            <div className="flex gap-2">
               <button
-                onClick={handleDownloadPhoto}
-                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all"
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.download = `MirrorMuse_${selectedShade.sku}.jpg`;
+                  a.href = capturedSnapImage || displayImage;
+                  a.click();
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-white/10 text-white text-xs font-bold cursor-pointer"
               >
-                <span>Download Photo</span>
+                Download
               </button>
               <button
                 onClick={() => {
                   handleAddToCart();
                   setIsCapturing(false);
                 }}
-                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-pink-500/20"
+                className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-pink-500 to-indigo-600 text-white text-xs font-bold cursor-pointer"
               >
-                <ShoppingCart className="w-4 h-4" />
-                <span>Add to Cart</span>
+                Add to Cart
               </button>
             </div>
           </div>
