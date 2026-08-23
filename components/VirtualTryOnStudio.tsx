@@ -34,6 +34,8 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
   const [comparisonMode, setComparisonMode] = useState<boolean>(false);
   const [addedToCart, setAddedToCart] = useState<boolean>(false);
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
+  const [tryOnResult, setTryOnResult] = useState<any>(null);
+  const [isExecutingTryOn, setIsExecutingTryOn] = useState<boolean>(false);
 
   const shades: Record<string, ProductShade[]> = {
     lipstick: [
@@ -108,12 +110,17 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
 
   const handleSelectShade = async (shade: ProductShade) => {
     setSelectedShade(shade);
-    await executeVirtualTryOn({
+    setIsExecutingTryOn(true);
+    const res = await executeVirtualTryOn({
       imageUrl: userImage,
       shadeSku: shade.sku,
       shadeHex: shade.hex,
       category: activeCategory
     });
+    if (res) {
+      setTryOnResult(res);
+    }
+    setIsExecutingTryOn(false);
   };
 
   const handleAddToCart = () => {
@@ -331,6 +338,22 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                 {addedToCart ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
                 <span>{addedToCart ? "Added to Cart!" : "Add Shade to Cart"}</span>
               </button>
+            </div>
+
+            {/* Live Perfect Corp YCE API Status Badge */}
+            <div className="p-3 rounded-2xl bg-[#0d1017] border border-indigo-500/30 flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${isExecutingTryOn ? "bg-amber-400 animate-ping" : "bg-emerald-400 animate-pulse"}`} />
+                <span className="text-gray-300 font-bold">PERFECT CORP YCE API:</span>
+                <span className="text-emerald-400 font-bold">
+                  {isExecutingTryOn ? "DISPATCHING TASK..." : (tryOnResult ? "200 OK (S2S TASK SUCCESS)" : "ACTIVE S2S v2.0 READY")}
+                </span>
+              </div>
+              {tryOnResult?.task_id && (
+                <span className="text-indigo-300 text-[10px] bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30 font-bold">
+                  TASK: {tryOnResult.task_id}
+                </span>
+              )}
             </div>
           </div>
         </div>
