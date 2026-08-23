@@ -102,6 +102,40 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     }
   };
 
+  const normalizeAndSetUserImage = (rawUrl: string) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const targetW = 800;
+      const targetH = 600;
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext("2d");
+
+      if (ctx) {
+        const imgAspect = img.width / img.height;
+        const targetAspect = targetW / targetH;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+        if (imgAspect > targetAspect) {
+          sw = img.height * targetAspect;
+          sx = (img.width - sw) / 2;
+        } else {
+          sh = img.width / targetAspect;
+          sy = (img.height - sh) / 2;
+        }
+
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+        setUserImage(canvas.toDataURL("image/jpeg", 0.92));
+      } else {
+        setUserImage(rawUrl);
+      }
+    };
+    img.onerror = () => setUserImage(rawUrl);
+    img.src = rawUrl;
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -112,7 +146,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
-          setUserImage(reader.result);
+          normalizeAndSetUserImage(reader.result);
         }
       };
       reader.readAsDataURL(file);
@@ -146,11 +180,11 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     if (activeCategory === "lipstick") {
       ctx.globalCompositeOperation = "multiply";
       ctx.beginPath();
-      ctx.moveTo(w * 0.455, h * 0.57);
-      ctx.bezierCurveTo(w * 0.47, h * 0.553, w * 0.485, h * 0.55, w * 0.5, h * 0.557);
-      ctx.bezierCurveTo(w * 0.515, h * 0.55, w * 0.53, h * 0.553, w * 0.545, h * 0.57);
-      ctx.bezierCurveTo(w * 0.53, h * 0.593, w * 0.515, h * 0.60, w * 0.5, h * 0.60);
-      ctx.bezierCurveTo(w * 0.485, h * 0.60, w * 0.47, h * 0.593, w * 0.455, h * 0.57);
+      ctx.moveTo(w * 0.47, h * 0.57);
+      ctx.bezierCurveTo(w * 0.48, h * 0.558, w * 0.49, h * 0.555, w * 0.5, h * 0.56);
+      ctx.bezierCurveTo(w * 0.51, h * 0.555, w * 0.52, h * 0.558, w * 0.53, h * 0.57);
+      ctx.bezierCurveTo(w * 0.52, h * 0.585, w * 0.51, h * 0.59, w * 0.5, h * 0.59);
+      ctx.bezierCurveTo(w * 0.49, h * 0.59, w * 0.48, h * 0.585, w * 0.47, h * 0.57);
       ctx.closePath();
       ctx.fill();
     } else if (activeCategory === "eyeshadow") {
@@ -390,10 +424,10 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                     </radialGradient>
                   </defs>
 
-                  {/* 1. LIPSTICK: Anatomical Lip Polygon */}
+                  {/* 1. LIPSTICK: Micro Anatomical Lip Polygon */}
                   {activeCategory === "lipstick" && (
                     <path
-                      d="M 182 171 C 188 166, 194 165, 200 167 C 206 165, 212 166, 218 171 C 212 178, 206 180, 200 180 C 194 180, 188 178, 182 171 Z"
+                      d="M 188 171 C 192 168, 196 167, 200 168 C 204 167, 208 168, 212 171 C 208 176, 204 177, 200 177 C 196 177, 192 176, 188 171 Z"
                       fill={selectedShade.hex}
                       fillOpacity={opacity / 100}
                       style={{ mixBlendMode: "multiply" }}
