@@ -214,29 +214,35 @@ export default function VirtualTryOnStudio() {
 
             {/* Landmark Radar Grid Overlay */}
             {showMesh && (
-              <div className="absolute inset-0 pointer-events-none border border-indigo-500/20 flex items-center justify-center">
-                <svg className="w-full h-full text-indigo-400/40" viewBox="0 0 400 300">
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <svg className="w-full h-full text-indigo-400/50" viewBox="0 0 400 300">
                   {/* Face Mesh Contour Lines */}
-                  <ellipse cx="200" cy="150" rx="90" ry="115" fill="none" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 3" />
-                  <path d="M 150 140 Q 200 120 250 140" fill="none" stroke="currentColor" strokeWidth="0.8" />
+                  <ellipse cx="200" cy="130" rx="75" ry="95" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" />
+                  <path d="M 155 115 Q 200 98 245 115" fill="none" stroke="currentColor" strokeWidth="1" />
+                  
                   {/* Eye Landmarks */}
-                  <circle cx="165" cy="135" r="14" fill="none" stroke="#a855f7" strokeWidth="0.8" />
-                  <circle cx="235" cy="135" r="14" fill="none" stroke="#a855f7" strokeWidth="0.8" />
+                  <circle cx="168" cy="115" r="12" fill="none" stroke="#a855f7" strokeWidth="1" />
+                  <circle cx="232" cy="115" r="12" fill="none" stroke="#a855f7" strokeWidth="1" />
+                  <circle cx="168" cy="115" r="4" fill="#38bdf8" />
+                  <circle cx="232" cy="115" r="4" fill="#38bdf8" />
+
                   {/* Nose Mesh */}
-                  <path d="M 200 135 L 195 170 L 205 170 Z" fill="none" stroke="currentColor" strokeWidth="0.8" />
+                  <path d="M 200 115 L 194 148 L 206 148 Z" fill="none" stroke="#38bdf8" strokeWidth="1" />
+                  
                   {/* Lip Landmarks */}
-                  <path d="M 170 195 Q 200 180 230 195 Q 200 215 170 195 Z" fill="none" stroke="#ec4899" strokeWidth="1.2" />
-                  {/* Landmark Points */}
+                  <path d="M 172 172 Q 200 160 228 172 Q 200 190 172 172 Z" fill="none" stroke="#ec4899" strokeWidth="1.5" />
+                  
+                  {/* Landmark Tracking Nodes */}
                   {[
-                    [165, 135], [235, 135], [200, 170], [170, 195], [230, 195], [200, 185], [200, 205],
-                    [145, 150], [255, 150], [180, 100], [220, 100]
+                    [168, 115], [232, 115], [200, 148], [172, 172], [228, 172], [200, 164], [200, 180],
+                    [148, 130], [252, 130], [182, 85], [218, 85], [190, 115], [210, 115]
                   ].map(([x, y], idx) => (
                     <circle key={idx} cx={x} cy={y} r="2.5" fill="#38bdf8" />
                   ))}
                 </svg>
                 <div className="absolute top-4 left-4 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-indigo-300 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{cameraStream ? "WEBRTC_CAMERA: LIVE STREAMING 60FPS" : "PERFECT_AR_TRACKING: 108 LANDMARKS ACTIVE"}</span>
+                  <span>{cameraStream ? "WEBRTC_CAMERA: LIVE STREAMING 60FPS" : "PERFECT_AR_TRACKING: 108 LANDMARKS ALIGNED"}</span>
                 </div>
               </div>
             )}
