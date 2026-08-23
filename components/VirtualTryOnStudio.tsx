@@ -368,21 +368,43 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                         : "bg-[#0d1017] border-white/[0.06] hover:border-white/20 hover:bg-white/[0.02]"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-7 h-7 rounded-xl border border-white/30 shadow-inner flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: shade.hex }}
-                      >
-                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                      </span>
-                      <div>
-                        <p className={`text-xs font-bold ${isSelected ? "text-white" : "text-gray-300"}`}>
-                          {shade.name}
-                        </p>
-                        <p className="text-[10px] text-gray-400 font-mono">{shade.finish} • SKU: {shade.sku}</p>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="w-7 h-7 rounded-xl border border-white/30 shadow-inner flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: shade.hex }}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        </span>
+                        <div>
+                          <p className={`text-xs font-bold ${isSelected ? "text-white" : "text-gray-300"}`}>
+                            {shade.name}
+                          </p>
+                          <p className="text-[10px] text-gray-400 font-mono">{shade.finish} • SKU: {shade.sku}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs font-bold text-amber-400">{shade.price}</span>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedShade(shade);
+                            if (onAddToCart) {
+                              onAddToCart({
+                                title: shade.name,
+                                price: shade.price,
+                                category: "AR Cosmetic Shade",
+                                image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80"
+                              });
+                            }
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-[11px] font-bold cursor-pointer transition-all hover:scale-105"
+                        >
+                          + Add
+                        </span>
                       </div>
                     </div>
-                    <span className="text-xs font-bold text-amber-400">{shade.price}</span>
                   </button>
                 );
               })}
