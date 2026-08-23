@@ -279,6 +279,86 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     }
   };
 
+  const handleDownloadPhoto = () => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const exportCanvasImage = (source: HTMLVideoElement | HTMLImageElement, width: number, height: number, isVideo: boolean) => {
+      canvas.width = width;
+      canvas.height = height;
+
+      if (isVideo) {
+        ctx.save();
+        ctx.translate(width, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(source as HTMLVideoElement, 0, 0, width, height);
+        ctx.restore();
+      } else {
+        ctx.drawImage(source as HTMLImageElement, 0, 0, width, height);
+      }
+
+      if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
+        ctx.save();
+        ctx.fillStyle = selectedShade.hex;
+        ctx.globalAlpha = opacity / 100;
+
+        if (activeCategory === "lipstick") {
+          ctx.globalCompositeOperation = "multiply";
+          ctx.beginPath();
+          ctx.moveTo(width * 0.48, height * 0.57);
+          ctx.bezierCurveTo(width * 0.49, height * 0.56, width * 0.495, height * 0.558, width * 0.5, height * 0.562);
+          ctx.bezierCurveTo(width * 0.505, height * 0.558, width * 0.51, height * 0.56, width * 0.52, height * 0.57);
+          ctx.bezierCurveTo(width * 0.51, height * 0.582, width * 0.505, height * 0.585, width * 0.5, height * 0.585);
+          ctx.bezierCurveTo(width * 0.495, height * 0.585, width * 0.49, height * 0.582, width * 0.48, height * 0.57);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = selectedShade.hex;
+          ctx.globalAlpha = (opacity / 100) * 0.85;
+          ctx.globalCompositeOperation = "source-over";
+          ctx.beginPath();
+          ctx.ellipse(width * 0.5, height * 0.572, width * 0.02, height * 0.009, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (activeCategory === "eyeshadow") {
+          ctx.globalCompositeOperation = "source-over";
+          ctx.beginPath();
+          ctx.ellipse(width * 0.42, height * 0.38, width * 0.04, height * 0.02, 0, 0, Math.PI * 2);
+          ctx.ellipse(width * 0.58, height * 0.38, width * 0.04, height * 0.02, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (activeCategory === "blush") {
+          ctx.globalCompositeOperation = "source-over";
+          ctx.beginPath();
+          ctx.ellipse(width * 0.35, height * 0.52, width * 0.06, height * 0.03, 0, 0, Math.PI * 2);
+          ctx.ellipse(width * 0.65, height * 0.52, width * 0.06, height * 0.03, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      const link = document.createElement("a");
+      link.download = `MirrorMuse_Look_${selectedShade.sku || "Custom"}.jpg`;
+      link.href = canvas.toDataURL("image/jpeg", 0.95);
+      link.click();
+    };
+
+    if (cameraStream && videoRef.current) {
+      const v = videoRef.current;
+      exportCanvasImage(v, v.videoWidth || 800, v.videoHeight || 600, true);
+    } else {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => exportCanvasImage(img, img.naturalWidth || 800, img.naturalHeight || 600, false);
+      img.onerror = () => {
+        const link = document.createElement("a");
+        link.download = `MirrorMuse_Look_${selectedShade.sku || "Custom"}.jpg`;
+        link.href = capturedSnapImage || userImage;
+        link.click();
+      };
+      img.src = userImage;
+    }
+  };
+
   const handleAddToCart = () => {
     setAddedToCart(true);
     if (onAddToCart) {
@@ -755,12 +835,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
             {/* Modal Actions */}
             <div className="flex items-center gap-3 pt-2">
               <button
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.download = `MirrorMuse_Look_${selectedShade.sku}.jpg`;
-                  link.href = capturedSnapImage || tryOnResult?.result_image_url || userImage;
-                  link.click();
-                }}
+                onClick={handleDownloadPhoto}
                 className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all"
               >
                 <span>Download Photo</span>
