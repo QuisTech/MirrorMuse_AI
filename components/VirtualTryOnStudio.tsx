@@ -146,11 +146,11 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     if (activeCategory === "lipstick") {
       ctx.globalCompositeOperation = "multiply";
       ctx.beginPath();
-      ctx.moveTo(w * 0.405, h * 0.573);
-      ctx.bezierCurveTo(w * 0.437, h * 0.54, w * 0.475, h * 0.533, w * 0.5, h * 0.546);
-      ctx.bezierCurveTo(w * 0.525, h * 0.533, w * 0.562, h * 0.54, w * 0.595, h * 0.573);
-      ctx.bezierCurveTo(w * 0.562, h * 0.62, w * 0.525, h * 0.633, w * 0.5, h * 0.633);
-      ctx.bezierCurveTo(w * 0.475, h * 0.633, w * 0.437, h * 0.62, w * 0.405, h * 0.573);
+      ctx.moveTo(w * 0.455, h * 0.57);
+      ctx.bezierCurveTo(w * 0.47, h * 0.553, w * 0.485, h * 0.55, w * 0.5, h * 0.557);
+      ctx.bezierCurveTo(w * 0.515, h * 0.55, w * 0.53, h * 0.553, w * 0.545, h * 0.57);
+      ctx.bezierCurveTo(w * 0.53, h * 0.593, w * 0.515, h * 0.60, w * 0.5, h * 0.60);
+      ctx.bezierCurveTo(w * 0.485, h * 0.60, w * 0.47, h * 0.593, w * 0.455, h * 0.57);
       ctx.closePath();
       ctx.fill();
     } else if (activeCategory === "eyeshadow") {
@@ -393,7 +393,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                   {/* 1. LIPSTICK: Anatomical Lip Polygon */}
                   {activeCategory === "lipstick" && (
                     <path
-                      d="M 172 170 C 182 163, 192 161, 200 164 C 208 161, 218 163, 228 170 C 218 181, 208 184, 200 184 C 192 184, 182 181, 172 170 Z"
+                      d="M 182 171 C 188 166, 194 165, 200 167 C 206 165, 212 166, 218 171 C 212 178, 206 180, 200 180 C 194 180, 188 178, 182 171 Z"
                       fill={selectedShade.hex}
                       fillOpacity={opacity / 100}
                       style={{ mixBlendMode: "multiply" }}
