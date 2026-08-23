@@ -169,7 +169,24 @@ export default function App() {
       {/* Live Directive Execution Topology HUD */}
       {activeDemo && (
         <div className="p-6 bg-[#0a0d14] border-b border-purple-500/30 animate-fadeIn max-w-7xl mx-auto w-full my-4 rounded-3xl">
-          <StudioWorkspace onTrigger={() => {}} isExecuting={false} />
+          <StudioWorkspace
+            onTrigger={(promptStr) => {
+              setActiveDemo(false);
+              const q = (promptStr || "").toLowerCase();
+              if (q.includes("skin") || q.includes("scan") || q.includes("analysis") || q.includes("diagnostic")) {
+                setActiveModule("skin");
+              } else if (q.includes("genai") || q.includes("look") || q.includes("style")) {
+                setActiveModule("genai");
+              } else if (q.includes("price") || q.includes("deal") || q.includes("shopping") || q.includes("serp")) {
+                setActiveModule("storefront");
+              } else if (q.includes("chat") || q.includes("copilot") || q.includes("groq")) {
+                setActiveModule("chat");
+              } else {
+                setActiveModule("tryon");
+              }
+            }}
+            isExecuting={false}
+          />
         </div>
       )}
 

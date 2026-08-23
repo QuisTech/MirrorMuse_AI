@@ -2,12 +2,23 @@ import React, { useState } from "react";
 import { Zap, Play, RefreshCw } from "lucide-react";
 
 interface StudioWorkspaceProps {
-  onTrigger: () => void;
-  isExecuting: boolean;
+  onTrigger: (prompt?: string) => void;
+  isExecuting?: boolean;
 }
 
-export default function StudioWorkspace({ onTrigger, isExecuting }: StudioWorkspaceProps) {
+export default function StudioWorkspace({ onTrigger, isExecuting: externalExecuting }: StudioWorkspaceProps) {
   const [promptInput, setPromptInput] = useState("");
+  const [localExecuting, setLocalExecuting] = useState(false);
+
+  const handleExecute = () => {
+    setLocalExecuting(true);
+    setTimeout(() => {
+      setLocalExecuting(false);
+      onTrigger(promptInput);
+    }, 1200);
+  };
+
+  const isRunning = externalExecuting || localExecuting;
   const nodes = [
   {
     "id": 1,
@@ -51,9 +62,9 @@ export default function StudioWorkspace({ onTrigger, isExecuting }: StudioWorksp
             placeholder="Enter production directive for MirrorMuse AI..."
             className="flex-1 px-4 py-3 rounded-xl bg-black/80 border border-indigo-500/40 text-sm text-white focus:outline-none"
           />
-          <button onClick={onTrigger} disabled={isExecuting} className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-bold flex items-center justify-center gap-2">
-            {isExecuting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
-            <span>EXECUTE DIRECTIVE</span>
+          <button onClick={handleExecute} disabled={isRunning} className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-400 hover:to-pink-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-500/25 cursor-pointer transition-all disabled:opacity-50">
+            {isRunning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+            <span>{isRunning ? "ORCHESTRATING DIRECTIVE..." : "EXECUTE DIRECTIVE"}</span>
           </button>
         </div>
       </div>
