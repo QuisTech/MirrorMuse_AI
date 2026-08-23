@@ -51,11 +51,12 @@ export default async function handler(req: any, res: any) {
       // SerpApi fallback
     }
 
-    // 3. Groq API Multi-Key Rotation & Multi-Model Cascade Engine
+    // 3. Groq API Multi-Key Rotation & Active Model Cascade Engine
     const rawKeys = process.env.GROQ_API_KEY;
     if (rawKeys) {
       const keyList = rawKeys.split(",").map(k => k.trim()).filter(Boolean);
-      const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+      // Active Groq models
+      const models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.6-27b"];
 
       const systemPrompt = `You are MirrorMuse AI, an expert AR Beauty & Skincare Concierge orchestrating Perfect Corp computer vision, Xano database (instance xtgz-thlr-k1v0), and SerpApi Google Shopping. Provide helpful, intelligent, concise, and professional beauty advice. Keep answers under 4 sentences. Recommend specific products (e.g. 3D Hyaluronic Serum, Velvet Rose Lipstick #402) when appropriate.`;
 
