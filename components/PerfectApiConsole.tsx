@@ -93,18 +93,21 @@ export default function PerfectApiConsole() {
       sponsor: "XANO",
       name: "Xano Enterprise Direct Workflow API",
       method: "POST",
-      url: "https://x8ki-let1-amp8.xano.io/api:v1/mirrormuse/agent-orchestrator",
+      url: "/api/xano/scans",
       latency: "18ms",
       status: 200,
       requestBody: {
-        directive: "Execute VisionAgent & SkinInsightAgent sync",
-        session_token: "xano_sess_89401"
+        xano_instance: "xtgz-thlr-k1v0",
+        user_id: "user_guest_908",
+        score: 83,
+        grade: "A+",
+        metrics: [
+          { label: "Skin Texture & Smoothness", score: 88, status: "Optimal" },
+          { label: "Fine Lines & Wrinkles", score: 94, status: "Excellent" }
+        ]
       },
       responseBody: {
-        status: "success",
-        xano_task_id: "xano_task_77104",
-        db_persisted: true,
-        execution_time_ms: 18.2
+        note: "Click 'Test Endpoint API Call' to save user skin diagnostics to your live Xano database instance (xtgz-thlr-k1v0)!"
       }
     }
   ];
@@ -136,6 +139,25 @@ export default function PerfectApiConsole() {
         setActiveApi(updatedApi);
       } else if (activeApi.id === "serpapi-search") {
         const res = await fetch("/api/serp/shopping?q=Hyaluronic+Acid+Hydration+Serum");
+        const data = await res.json();
+        const latencyMs = Date.now() - start;
+        const updatedApi = {
+          ...activeApi,
+          latency: `${latencyMs}ms`,
+          status: 200,
+          responseBody: data
+        };
+        setActiveApi(updatedApi);
+      } else if (activeApi.id === "xano-backend") {
+        const res = await fetch("/api/xano/scans", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: "user_guest_908",
+            score: 83,
+            grade: "A+"
+          })
+        });
         const data = await res.json();
         const latencyMs = Date.now() - start;
         const updatedApi = {
