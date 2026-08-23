@@ -375,15 +375,57 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
               />
             )}
 
-            {/* Live AR Shader (Applied when camera or preview active, hidden if API image rendered) */}
+            {/* Targeted Anatomical SVG AR Shader Overlay (Lipstick on lips ONLY, Eyeshadow on lids, Blush on cheeks) */}
             {!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url) && (
-              <div
-                className="absolute inset-0 pointer-events-none transition-all duration-300"
-                style={{
-                  background: `radial-gradient(ellipse at 50% 65%, ${selectedShade.hex}${Math.round((opacity / 100) * 255).toString(16).padStart(2, '0')} 0%, transparent 45%)`,
-                  mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light"
-                }}
-              />
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <svg className="w-full h-full" viewBox="0 0 400 300">
+                  <defs>
+                    <radialGradient id="blushLeftGrad">
+                      <stop offset="0%" stopColor={selectedShade.hex} stopOpacity={opacity / 100} />
+                      <stop offset="100%" stopColor={selectedShade.hex} stopOpacity="0" />
+                    </radialGradient>
+                    <radialGradient id="blushRightGrad">
+                      <stop offset="0%" stopColor={selectedShade.hex} stopOpacity={opacity / 100} />
+                      <stop offset="100%" stopColor={selectedShade.hex} stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+
+                  {/* 1. LIPSTICK: Anatomical Lip Polygon */}
+                  {activeCategory === "lipstick" && (
+                    <path
+                      d="M 172 170 C 182 163, 192 161, 200 164 C 208 161, 218 163, 228 170 C 218 181, 208 184, 200 184 C 192 184, 182 181, 172 170 Z"
+                      fill={selectedShade.hex}
+                      fillOpacity={opacity / 100}
+                      style={{ mixBlendMode: "multiply" }}
+                    />
+                  )}
+
+                  {/* 2. EYESHADOW: Precise Eyelid Arches */}
+                  {activeCategory === "eyeshadow" && (
+                    <g style={{ mixBlendMode: "soft-light" }}>
+                      <path d="M 148 115 Q 168 94 188 115 Z" fill={selectedShade.hex} fillOpacity={opacity / 100} />
+                      <path d="M 212 115 Q 232 94 252 115 Z" fill={selectedShade.hex} fillOpacity={opacity / 100} />
+                    </g>
+                  )}
+
+                  {/* 3. BLUSH: Precise Cheekbone Blurs */}
+                  {activeCategory === "blush" && (
+                    <g style={{ mixBlendMode: "soft-light" }}>
+                      <ellipse cx="140" cy="155" rx="24" ry="16" fill="url(#blushLeftGrad)" />
+                      <ellipse cx="260" cy="155" rx="24" ry="16" fill="url(#blushRightGrad)" />
+                    </g>
+                  )}
+
+                  {/* 4. EYEWEAR: Designer Frame Overlay */}
+                  {activeCategory === "eyewear" && (
+                    <g stroke={selectedShade.hex} strokeWidth="3" fill="none" opacity={opacity / 100}>
+                      <rect x="142" y="100" width="48" height="32" rx="10" fill={selectedShade.hex + "33"} />
+                      <rect x="210" y="100" width="48" height="32" rx="10" fill={selectedShade.hex + "33"} />
+                      <line x1="190" y1="112" x2="210" y2="112" strokeWidth="2.5" />
+                    </g>
+                  )}
+                </svg>
+              </div>
             )}
 
             {/* Landmark Radar Grid Overlay (Suppressed if API image rendered) */}
