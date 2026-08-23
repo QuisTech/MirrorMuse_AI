@@ -510,6 +510,84 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
           </div>
         </div>
       </div>
+
+      {/* Snap Look Capture Modal */}
+      {isCapturing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="w-full max-w-lg bg-[#0d1017] border border-pink-500/40 rounded-3xl p-6 shadow-2xl space-y-5 relative">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-pink-400" />
+                <h3 className="text-base font-bold text-white tracking-tight">AR Look Snapshot Captured</h3>
+              </div>
+              <button
+                onClick={() => setIsCapturing(false)}
+                className="text-gray-400 hover:text-white text-xs font-bold px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Captured Look Canvas Preview */}
+            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black border border-white/10 shadow-inner group">
+              <img
+                src={
+                  tryOnResult?.result_image_url ||
+                  tryOnResult?.output_url ||
+                  tryOnResult?.data?.result_image_url ||
+                  userImage
+                }
+                alt="Captured Snapshot"
+                className="w-full h-full object-cover"
+              />
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: `radial-gradient(ellipse at 50% 65%, ${selectedShade.hex}${Math.round((opacity / 100) * 255).toString(16).padStart(2, '0')} 0%, transparent 45%)`,
+                  mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light"
+                }}
+              />
+              <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-[10px] font-mono text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>PERFECT_SNAP_ID: {selectedShade.sku}-{Date.now().toString().slice(-4)}</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs">
+              <div>
+                <p className="font-bold text-white">{selectedShade.name}</p>
+                <p className="text-[11px] text-gray-400">Finish: {selectedShade.finish} • Opacity: {opacity}%</p>
+              </div>
+              <span className="font-extrabold text-pink-400 font-mono">{selectedShade.price}</span>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.download = `MirrorMuse_Look_${selectedShade.sku}.jpg`;
+                  link.href = tryOnResult?.result_image_url || userImage;
+                  link.click();
+                }}
+                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all"
+              >
+                <span>Download Photo</span>
+              </button>
+              <button
+                onClick={() => {
+                  handleAddToCart();
+                  setIsCapturing(false);
+                }}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all shadow-lg shadow-pink-500/20"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                <span>Add to Cart</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
