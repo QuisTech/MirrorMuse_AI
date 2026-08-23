@@ -12,7 +12,7 @@ interface ProductShade {
 export default function VirtualTryOnStudio() {
   const [activeCategory, setActiveCategory] = useState<"lipstick" | "blush" | "eyeshadow" | "foundation" | "eyewear">("lipstick");
   const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80");
-  const [isLiveCamera, setIsLiveCamera] = useState<boolean>(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,26 +58,27 @@ export default function VirtualTryOnStudio() {
     ]
   };
 
-  // Toggle Live Webcam Streaming
+  // Attach live camera stream to video DOM element whenever stream changes
+  useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(err => console.warn("Video stream play note:", err));
+    }
+  }, [cameraStream]);
+
+  // Toggle Live Laptop Camera
   const toggleLiveCamera = async () => {
-    if (isLiveCamera) {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-        videoRef.current.srcObject = null;
-      }
-      setIsLiveCamera(false);
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
         });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        setIsLiveCamera(true);
+        setCameraStream(stream);
       } catch (e) {
-        alert("Camera permission denied or camera not available.");
+        alert("Camera permission denied or laptop camera unavailable.");
       }
     }
   };
@@ -85,7 +86,10 @@ export default function VirtualTryOnStudio() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (isLiveCamera) toggleLiveCamera();
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        setCameraStream(null);
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
@@ -132,13 +136,13 @@ export default function VirtualTryOnStudio() {
           <button
             onClick={toggleLiveCamera}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer shadow-lg ${
-              isLiveCamera
+              cameraStream
                 ? "bg-rose-600 border-rose-500 text-white animate-pulse"
                 : "bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-500 text-white hover:opacity-90"
             }`}
           >
-            {isLiveCamera ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
-            <span>{isLiveCamera ? "Turn Off Live Camera" : "Enable Live Laptop Camera"}</span>
+            {cameraStream ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+            <span>{cameraStream ? "Turn Off Live Camera" : "Enable Live Laptop Camera"}</span>
           </button>
 
           <button
@@ -181,12 +185,14 @@ export default function VirtualTryOnStudio() {
         <div className="lg:col-span-8 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 relative overflow-hidden shadow-2xl space-y-4">
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black flex items-center justify-center group">
             {/* Live Camera Video Feed or Base Portrait Image */}
-            {isLiveCamera ? (
+            {cameraStream ? (
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
+                onCanPlay={(e) => e.currentTarget.play()}
+                onLoadedMetadata={(e) => e.currentTarget.play()}
                 className="w-full h-full object-cover transform -scale-x-100"
               />
             ) : (
@@ -230,13 +236,13 @@ export default function VirtualTryOnStudio() {
                 </svg>
                 <div className="absolute top-4 left-4 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-indigo-300 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{isLiveCamera ? "WEBRTC_CAMERA: LIVE STREAMING 60FPS" : "PERFECT_AR_TRACKING: 108 LANDMARKS ACTIVE"}</span>
+                  <span>{cameraStream ? "WEBRTC_CAMERA: LIVE STREAMING 60FPS" : "PERFECT_AR_TRACKING: 108 LANDMARKS ACTIVE"}</span>
                 </div>
               </div>
             )}
 
             {/* Split Comparison View */}
-            {comparisonMode && !isLiveCamera && (
+            {comparisonMode && !cameraStream && (
               <div className="absolute inset-y-0 left-0 w-1/2 border-r-2 border-white/80 overflow-hidden bg-black">
                 <img
                   src={userImage}

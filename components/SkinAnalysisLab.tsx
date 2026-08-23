@@ -1,11 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Sparkles, Scan, CheckCircle2, Upload, Camera, RefreshCw, ShoppingBag, ShieldCheck, ArrowRight, Activity, Zap, Video, VideoOff } from "lucide-react";
 import { executeSkinAnalysis, SkinAnalysisResponse } from "../src/services/perfectCorp";
 
 export default function SkinAnalysisLab() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=80");
-  const [isLiveCamera, setIsLiveCamera] = useState<boolean>(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,26 +28,27 @@ export default function SkinAnalysisLab() {
     ]
   });
 
+  // Attach live camera stream to video DOM element whenever stream changes
+  useEffect(() => {
+    if (videoRef.current && cameraStream) {
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(err => console.warn("Video stream play note:", err));
+    }
+  }, [cameraStream]);
+
   // Toggle Live Webcam Streaming
   const toggleLiveCamera = async () => {
-    if (isLiveCamera) {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-        videoRef.current.srcObject = null;
-      }
-      setIsLiveCamera(false);
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
         });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        setIsLiveCamera(true);
+        setCameraStream(stream);
       } catch (e) {
-        alert("Camera permission denied or camera not available.");
+        alert("Camera permission denied or laptop camera unavailable.");
       }
     }
   };
@@ -69,7 +70,10 @@ export default function SkinAnalysisLab() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (isLiveCamera) toggleLiveCamera();
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        setCameraStream(null);
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
@@ -83,7 +87,7 @@ export default function SkinAnalysisLab() {
   const handleStartScan = async () => {
     setIsScanning(true);
     let targetImage = userImage;
-    if (isLiveCamera) {
+    if (cameraStream) {
       targetImage = captureWebcamSnapshot();
     }
 
@@ -128,13 +132,13 @@ export default function SkinAnalysisLab() {
           <button
             onClick={toggleLiveCamera}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer shadow-lg ${
-              isLiveCamera
+              cameraStream
                 ? "bg-rose-600 border-rose-500 text-white animate-pulse"
                 : "bg-gradient-to-r from-cyan-600 to-blue-600 border-cyan-500 text-white hover:opacity-90"
             }`}
           >
-            {isLiveCamera ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
-            <span>{isLiveCamera ? "Turn Off Live Camera" : "Enable Live Laptop Camera"}</span>
+            {cameraStream ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+            <span>{cameraStream ? "Turn Off Live Camera" : "Enable Live Laptop Camera"}</span>
           </button>
 
           <button
@@ -161,12 +165,14 @@ export default function SkinAnalysisLab() {
         {/* Left: Scan Camera / Image Viewport */}
         <div className="lg:col-span-5 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 space-y-4 shadow-2xl relative">
           <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
-            {isLiveCamera ? (
+            {cameraStream ? (
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
+                onCanPlay={(e) => e.currentTarget.play()}
+                onLoadedMetadata={(e) => e.currentTarget.play()}
                 className="w-full h-full object-cover transform -scale-x-100"
               />
             ) : (
@@ -212,7 +218,7 @@ export default function SkinAnalysisLab() {
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-cyan-400" />
                 <span className="font-bold text-white">
-                  {isScanning ? "Contacting Perfect Corp API..." : isLiveCamera ? "Live Laptop Camera Active" : "Diagnostic Target Ready"}
+                  {isScanning ? "Contacting Perfect Corp API..." : cameraStream ? "Live Laptop Camera Active" : "Diagnostic Target Ready"}
                 </span>
               </div>
               <span className="text-[10px] font-mono text-gray-400">PERFECT_SKIN_AI</span>
