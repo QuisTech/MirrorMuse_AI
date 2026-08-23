@@ -32,6 +32,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [comparisonMode, setComparisonMode] = useState<boolean>(false);
   const [addedToCart, setAddedToCart] = useState<boolean>(false);
+  const [isFavorited, setIsFavorited] = useState<boolean>(false);
 
   const shades: Record<string, ProductShade[]> = {
     lipstick: [
@@ -425,8 +426,14 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
               <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
                 <ShieldCheck className="w-3 h-3" /> PERFECT CORP VERIFIED
               </span>
-              <button className="text-xs text-gray-400 hover:text-pink-400 flex items-center gap-1">
-                <Heart className="w-3.5 h-3.5" /> Favorite
+              <button
+                onClick={() => setIsFavorited(!isFavorited)}
+                className={`text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isFavorited ? "text-pink-400 font-extrabold" : "text-gray-400 hover:text-pink-300"
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isFavorited ? "fill-pink-400 text-pink-400 animate-bounce" : ""}`} />
+                <span>{isFavorited ? "Favorited!" : "Favorite"}</span>
               </button>
             </div>
             <div>
