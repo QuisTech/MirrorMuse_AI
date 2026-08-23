@@ -133,6 +133,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
 
   const handleSelectShade = async (shade: ProductShade) => {
     setSelectedShade(shade);
+    setTryOnResult(null); // Instant feedback: clear previous API result so live camera tint updates immediately
     setIsExecutingTryOn(true);
     try {
       const res = await executeVirtualTryOn({
@@ -460,7 +461,6 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                 <button
                   key={shade.sku}
                   onClick={() => handleSelectShade(shade)}
-                  disabled={isExecutingTryOn}
                   className={`w-full p-3 rounded-2xl border text-left flex items-center gap-3 cursor-pointer transition-all ${selected
                       ? "border-indigo-500/60 bg-indigo-900/30"
                       : "border-white/[0.06] bg-[#0d1017] hover:border-white/20"
