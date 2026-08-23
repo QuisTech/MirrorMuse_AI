@@ -72,6 +72,23 @@ export default function PerfectApiConsole() {
       }
     },
     {
+      id: "serpapi-search",
+      sponsor: "SERPAPI",
+      name: "Real-Time Product Market Pricing Search",
+      method: "GET",
+      url: "/api/serp/shopping?q=Hyaluronic+Acid+Serum",
+      latency: "42ms",
+      status: 200,
+      requestBody: {
+        engine: "google_shopping",
+        query: "Hyaluronic Acid Serum",
+        api_key: "●●●●●●●●●●●●●●●●●●●● (Configured in Vercel ENV)"
+      },
+      responseBody: {
+        note: "Click 'Test Endpoint API Call' above to execute real-time SerpApi Google Shopping search using your live key!"
+      }
+    },
+    {
       id: "xano-backend",
       sponsor: "XANO",
       name: "Xano Enterprise Direct Workflow API",
@@ -88,25 +105,6 @@ export default function PerfectApiConsole() {
         xano_task_id: "xano_task_77104",
         db_persisted: true,
         execution_time_ms: 18.2
-      }
-    },
-    {
-      id: "serpapi-search",
-      sponsor: "SERPAPI",
-      name: "Real-Time Product Market Pricing Search",
-      method: "GET",
-      url: "https://serpapi.com/search?q=hyaluronic+acid+serum+price&engine=google_shopping",
-      latency: "42ms",
-      status: 200,
-      requestBody: {
-        query: "hyaluronic acid serum price",
-        location: "United States"
-      },
-      responseBody: {
-        shopping_results: [
-          { title: "PerfectSkin 3D Hydration Serum", price: "$46.00", seller: "Sephora" },
-          { title: "Luminous Moisture Drops", price: "$52.00", seller: "Ulta" }
-        ]
       }
     }
   ];
@@ -178,7 +176,7 @@ export default function PerfectApiConsole() {
             </span>
           </div>
           <h2 className="text-xl font-bold text-white tracking-tight font-sans">Perfect Corp & Partner REST API Console</h2>
-          <p className="text-xs text-gray-400 font-sans">Inspect exact JSON payload structures and live API responses for hackathon judge evaluation.</p>
+          <p className="text-xs text-gray-400 font-sans font-sans">Inspect exact JSON payload structures and live API responses for hackathon judge evaluation.</p>
         </div>
 
         <button
