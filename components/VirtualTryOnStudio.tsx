@@ -130,6 +130,10 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     });
     if (res) {
       setTryOnResult(res);
+      const renderUrl = res.result_image_url || res.output_url || res.data?.result_image_url || res.data?.output_url;
+      if (renderUrl) {
+        setUserImage(renderUrl);
+      }
     }
     setIsExecutingTryOn(false);
   };
@@ -302,8 +306,8 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
               />
             )}
 
-            {/* Landmark Radar Grid Overlay */}
-            {showMesh && (
+            {/* Landmark Radar Grid Overlay (Suppressed if API image rendered) */}
+            {showMesh && !(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url) && (
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                 <svg className="w-full h-full text-indigo-400/50" viewBox="0 0 400 300">
                   {/* Face Mesh Contour Lines */}
@@ -569,13 +573,15 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                 alt="Captured Snapshot"
                 className="w-full h-full object-cover"
               />
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: `radial-gradient(ellipse at 50% 65%, ${selectedShade.hex}${Math.round((opacity / 100) * 255).toString(16).padStart(2, '0')} 0%, transparent 45%)`,
-                  mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light"
-                }}
-              />
+              {!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url) && (
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: `radial-gradient(ellipse at 50% 65%, ${selectedShade.hex}${Math.round((opacity / 100) * 255).toString(16).padStart(2, '0')} 0%, transparent 45%)`,
+                    mixBlendMode: activeCategory === "lipstick" ? "multiply" : "soft-light"
+                  }}
+                />
+              )}
               <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 text-[10px] font-mono text-white flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>PERFECT_SNAP_ID: {selectedShade.sku}-{Date.now().toString().slice(-4)}</span>
