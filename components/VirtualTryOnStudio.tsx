@@ -36,6 +36,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
   const [isFavorited, setIsFavorited] = useState<boolean>(false);
   const [tryOnResult, setTryOnResult] = useState<any>(null);
   const [isExecutingTryOn, setIsExecutingTryOn] = useState<boolean>(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const shades: Record<string, ProductShade[]> = {
     lipstick: [
@@ -79,14 +80,23 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     if (cameraStream) {
       cameraStream.getTracks().forEach(track => track.stop());
       setCameraStream(null);
+      setCameraError(null);
     } else {
+      setCameraError(null);
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
-        });
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
+          });
+        } catch {
+          // Fallback to basic video constraint if strict resolution rejected
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        }
         setCameraStream(stream);
-      } catch (e) {
-        alert("Camera permission denied or laptop camera unavailable.");
+      } catch (e: any) {
+        console.warn("Camera request note:", e);
+        setCameraError("Camera access blocked by browser permission or hardware in use. Click lock icon in browser URL bar to allow, or use sample portrait / upload photo.");
       }
     }
   };
@@ -214,6 +224,19 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: Interactive AR Camera Viewport */}
         <div className="lg:col-span-8 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 relative overflow-hidden shadow-2xl space-y-4">
+          {/* Camera Access Error Warning Banner */}
+          {cameraError && (
+            <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between animate-fadeIn font-medium">
+              <span>⚠️ {cameraError}</span>
+              <button
+                onClick={() => setCameraError(null)}
+                className="text-amber-400 font-bold hover:underline ml-2 text-[10px] uppercase cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black flex items-center justify-center group">
             {/* Live Camera Video Feed or Base Portrait Image */}
             {cameraStream ? (
