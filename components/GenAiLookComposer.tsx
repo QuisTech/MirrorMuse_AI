@@ -118,23 +118,34 @@ export default function GenAiLookComposer() {
     };
   };
 
-  const handleSynthesize = () => {
+  const handleSynthesize = async () => {
     if (!customPrompt) return;
     setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      const match = getImageForPrompt(customPrompt);
-      setActiveLook({
-        id: "custom-gen-" + Date.now(),
-        title: "Custom GenAI Look: " + customPrompt.slice(0, 24) + "...",
-        category: "Custom Prompt",
-        prompt: customPrompt,
-        image: match.image,
-        lipShade: match.lip,
-        eyeShade: match.eye,
-        products: match.prods
+
+    try {
+      const res = await fetch("/api/perfect/genai-look", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: customPrompt })
       });
-    }, 1800);
+      if (res.ok) {
+        const data = await res.json();
+        setActiveLook({
+          id: "custom-gen-" + Date.now(),
+          title: "GenAI Look: " + customPrompt.slice(0, 24) + "...",
+          category: "Live Flux.1 AI Model",
+          prompt: customPrompt,
+          image: data.imageUrl,
+          lipShade: data.lipShade,
+          eyeShade: data.eyeShade,
+          products: data.products
+        });
+      }
+    } catch (e) {
+      console.warn("GenAI API Synthesis Note:", e);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
