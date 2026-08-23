@@ -82,13 +82,17 @@ export async function executeVirtualTryOn(params: {
           const pollRes = await fetch(`/api/perfect/tryon?task_id=${encodeURIComponent(taskId)}`);
           if (pollRes.ok) {
             const pollData = await pollRes.json();
-            if (pollData.data && pollData.data.task_status === "success") {
-              return pollData.data;
+            const payload = pollData.data || pollData;
+            if (payload && (payload.task_status === "success" || payload.status === "success")) {
+              return {
+                ...payload,
+                result_image_url: payload.result_image_url || payload.output_url || payload.image_url || payload.results?.result_image_url || payload.results?.output_url || null
+              };
             }
           }
         }
       }
-      return proxyData;
+      return proxyData.data || proxyData;
     }
   } catch (err) {
     console.warn("Virtual Try-On S2S dispatch note:", err);
