@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/perfect/tryon", "destination": "/api/perfect/tryon.ts" },
+    { "source": "/api/perfect/skin-analysis", "destination": "/api/perfect/skin-analysis.ts" },
+    { "source": "/api/perfect/genai-look", "destination": "/api/perfect/genai-look.ts" },
+    { "source": "/api/serp/shopping", "destination": "/api/serp/shopping.ts" },
+    { "source": "/api/xano/scans", "destination": "/api/xano/scans.ts" },
+    { "source": "/api/ai/chat", "destination": "/api/ai/chat.ts" }
+  ]
+}
