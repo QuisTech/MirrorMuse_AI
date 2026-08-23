@@ -27,6 +27,11 @@ export default function App() {
 
   const [activeDemo, setActiveDemo] = useState<boolean>(false);
   const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
+  const [orderSuccessDetails, setOrderSuccessDetails] = useState<{
+    orderId: string;
+    items: CartItem[];
+    total: string;
+  } | null>(null);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([
     { id: "c1", title: "Velvet Rose Lip Shade #402", price: "$34.00", category: "AR Try-On", image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80" },
@@ -449,14 +454,97 @@ export default function App() {
                 <span className="font-bold text-white font-mono">{cartItems.length} SKUs</span>
               </div>
               <button
+                disabled={cartItems.length === 0}
                 onClick={() => {
-                  alert("Order Placed Successfully! Thank you for using MirrorMuse AI.");
+                  const numTotal = cartItems.reduce((acc, curr) => {
+                    const priceNum = parseFloat(curr.price.replace(/[^0-9.]/g, "")) || 35.00;
+                    return acc + priceNum;
+                  }, 0);
+                  const generatedId = "MM-" + Math.floor(10000 + Math.random() * 90000) + "-AI";
+                  setOrderSuccessDetails({
+                    orderId: generatedId,
+                    items: [...cartItems],
+                    total: `$${numTotal.toFixed(2)}`
+                  });
                   setCartItems([]);
                   setShowCartDrawer(false);
                 }}
-                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl cursor-pointer"
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Proceed to Checkout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* World-Class Premium Order Confirmation Modal */}
+      {orderSuccessDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-fadeIn p-4">
+          <div className="w-full max-w-lg bg-gradient-to-b from-[#0f1422] to-[#0a0d14] border border-emerald-500/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative overflow-hidden">
+            {/* Background Glow Effect */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Header Badge */}
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border-2 border-emerald-500/40 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20 animate-bounce">
+                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30 uppercase tracking-widest font-mono">
+                  TRANSACTION CONFIRMED • XANO PERSISTED
+                </span>
+                <h3 className="text-xl font-extrabold text-white mt-2">Order Placed Successfully!</h3>
+                <p className="text-xs text-gray-300 mt-1">Thank you for using MirrorMuse AI Beauty Concierge.</p>
+              </div>
+            </div>
+
+            {/* Order Receipt Details Card */}
+            <div className="p-4 rounded-2xl bg-black/60 border border-white/10 space-y-3 text-xs">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-gray-400">Order Ref ID:</span>
+                <span className="font-mono font-bold text-indigo-400">{orderSuccessDetails.orderId}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-gray-400">Status:</span>
+                <span className="font-bold text-emerald-400 flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" /> AR Dispatch Ready
+                </span>
+              </div>
+
+              {/* Itemized Items */}
+              <div className="space-y-2 pt-1 max-h-40 overflow-y-auto pr-1">
+                {orderSuccessDetails.items.map((it, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-1">
+                    <span className="text-gray-300 line-clamp-1 max-w-[240px] font-medium">{it.title}</span>
+                    <span className="font-mono font-bold text-amber-400">{it.price}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-white/10 pt-3 text-sm font-extrabold">
+                <span className="text-white">Total Amount Paid:</span>
+                <span className="text-amber-400 font-mono text-base">{orderSuccessDetails.total}</span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setOrderSuccessDetails(null);
+                  setActiveModule("dashboard");
+                }}
+                className="flex-1 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer transition-all border border-white/10"
+              >
+                Track in Telemetry
+              </button>
+              <button
+                onClick={() => setOrderSuccessDetails(null)}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 text-white font-extrabold text-xs shadow-lg cursor-pointer hover:scale-[1.02] transition-all"
+              >
+                Continue Shopping
               </button>
             </div>
           </div>
