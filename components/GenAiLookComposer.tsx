@@ -227,7 +227,10 @@ export default function GenAiLookComposer() {
           <img
             src={activeLook.image}
             onError={(e) => {
-              (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1024&q=80";
+              const target = e.target as HTMLImageElement;
+              if (!target.src.includes("seed=retry")) {
+                target.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(activeLook.prompt || "beauty portrait")}?seed=retry${Date.now()}&width=1024&height=1024&nologo=true`;
+              }
             }}
             alt={activeLook.title}
             className="w-full h-full object-cover"
