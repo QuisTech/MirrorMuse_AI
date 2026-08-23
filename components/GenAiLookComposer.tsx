@@ -17,6 +17,8 @@ interface GenAiLookComposerProps {
 }
 
 export default function GenAiLookComposer({ onAddToCart }: GenAiLookComposerProps = {}) {
+  const [addedItemIds, setAddedItemIds] = useState<Record<string, boolean>>({});
+  const [addedBundle, setAddedBundle] = useState<boolean>(false);
   const presets: LookPreset[] = [
     {
       id: "golden-hour",
@@ -272,25 +274,45 @@ export default function GenAiLookComposer({ onAddToCart }: GenAiLookComposerProp
               <label className="text-xs font-bold text-gray-300 uppercase tracking-wider">Required Products</label>
               <span className="text-[10px] font-bold text-purple-400 font-mono">MIRRORMUSE_GENAI_COLLECTION</span>
             </div>
-            {activeLook.products.map((prod, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-black/60 border border-white/[0.06] flex items-center justify-between text-xs">
-                <span className="text-white font-medium">{prod.name}</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-amber-400">{prod.price}</span>
-                  <button
-                    onClick={() => onAddToCart && onAddToCart({ title: prod.name, price: prod.price, category: "GenAI Cosmetic SKU", image: activeLook.image })}
-                    className="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-[10px] font-bold cursor-pointer transition-all hover:scale-105"
-                  >
-                    + Add
-                  </button>
+            {activeLook.products.map((prod, idx) => {
+              const isAdded = !!addedItemIds[prod.name];
+              return (
+                <div key={idx} className="p-3 rounded-xl bg-black/60 border border-white/[0.06] flex items-center justify-between text-xs">
+                  <span className="text-white font-medium">{prod.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-amber-400">{prod.price}</span>
+                    <button
+                      onClick={() => {
+                        setAddedItemIds(prev => ({ ...prev, [prod.name]: true }));
+                        if (onAddToCart) {
+                          onAddToCart({ title: prod.name, price: prod.price, category: "GenAI Cosmetic SKU", image: activeLook.image });
+                        }
+                        setTimeout(() => setAddedItemIds(prev => ({ ...prev, [prod.name]: false })), 2000);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all hover:scale-105 ${
+                        isAdded ? "bg-emerald-600 text-white" : "bg-pink-600 hover:bg-pink-500 text-white"
+                      }`}
+                    >
+                      {isAdded ? "✓ Added" : "+ Add"}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          <button onClick={() => onAddToCart && onAddToCart({ title: activeLook.title, price: "$90.00", category: "GenAI Look Bundle", image: activeLook.image })} className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white font-bold text-xs shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] transition-all">
-            <ShoppingCart className="w-4 h-4" />
-            <span>Add Complete Look Bundle to Cart</span>
+          <button
+            onClick={() => {
+              setAddedBundle(true);
+              if (onAddToCart) {
+                onAddToCart({ title: activeLook.title + " Bundle", price: "$90.00", category: "GenAI Look Kit", image: activeLook.image });
+              }
+              setTimeout(() => setAddedBundle(false), 2000);
+            }}
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white font-bold text-xs shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] transition-all"
+          >
+            {addedBundle ? <Check className="w-4 h-4 text-emerald-300" /> : <ShoppingCart className="w-4 h-4" />}
+            <span>{addedBundle ? "Bundle Added to Cart!" : "Add Complete Look Bundle to Cart"}</span>
           </button>
         </div>
       </div>
