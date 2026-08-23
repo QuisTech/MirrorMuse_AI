@@ -105,6 +105,24 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     }
   };
 
+  const handleSelectShade = async (shade: ProductShade) => {
+    setSelectedShade(shade);
+    try {
+      await fetch("/api/perfect/tryon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shadeName: shade.name,
+          shadeHex: shade.hex,
+          category: activeCategory,
+          image: userImage
+        })
+      });
+    } catch (e) {
+      console.error("Perfect Corp Try-On dispatch error:", e);
+    }
+  };
+
   const handleAddToCart = () => {
     setAddedToCart(true);
     if (onAddToCart) {
@@ -370,7 +388,7 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                 return (
                   <button
                     key={shade.sku}
-                    onClick={() => setSelectedShade(shade)}
+                    onClick={() => handleSelectShade(shade)}
                     className={`w-full p-3 rounded-2xl transition-all cursor-pointer border flex items-center justify-between text-left ${
                       isSelected
                         ? "bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border-indigo-500/60 shadow-lg"
