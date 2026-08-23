@@ -62,7 +62,7 @@ export default function App() {
     return `Great question! Based on Perfect Corp AI Skin Diagnostics, I recommend combining hydrating skincare serums with custom lip shades. You can test your look in real-time in the AR Try-On tab!`;
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
     const userMsg = chatInput;
     setChatInput("");
@@ -70,16 +70,32 @@ export default function App() {
     setChatMessages((prev) => [
       ...prev,
       { role: "user", text: userMsg },
-      { role: "assistant", text: "Analyzing your request against Perfect Corp AI Skin Diagnostics..." }
+      { role: "assistant", text: "Contacting MirrorMuse AI Reasoning Engine..." }
     ]);
 
-    setTimeout(() => {
-      const responseText = getAIConciergeResponse(userMsg);
-      setChatMessages((prev) => [
-        ...prev.slice(0, prev.length - 1),
-        { role: "assistant", text: responseText }
-      ]);
-    }, 600);
+    try {
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const replyText = data.reply || "Thank you! Check our AR Try-On and AI Skin Lab tabs for personalized recommendations.";
+        setChatMessages((prev) => [
+          ...prev.slice(0, prev.length - 1),
+          { role: "assistant", text: replyText }
+        ]);
+        return;
+      }
+    } catch (e) {
+      console.warn("AI Chat API call error:", e);
+    }
+
+    setChatMessages((prev) => [
+      ...prev.slice(0, prev.length - 1),
+      { role: "assistant", text: "For personalized recommendations, try running a live scan in our AI Skin Lab tab!" }
+    ]);
   };
 
   return (
