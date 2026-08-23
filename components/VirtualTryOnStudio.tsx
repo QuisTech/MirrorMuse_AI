@@ -180,11 +180,11 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     if (activeCategory === "lipstick") {
       ctx.globalCompositeOperation = "multiply";
       ctx.beginPath();
-      ctx.moveTo(w * 0.485, h * 0.573);
-      ctx.bezierCurveTo(w * 0.49, h * 0.567, w * 0.495, h * 0.565, w * 0.5, h * 0.568);
-      ctx.bezierCurveTo(w * 0.505, h * 0.565, w * 0.51, h * 0.567, w * 0.515, h * 0.573);
-      ctx.bezierCurveTo(w * 0.51, h * 0.58, w * 0.505, h * 0.582, w * 0.5, h * 0.582);
-      ctx.bezierCurveTo(w * 0.495, h * 0.582, w * 0.49, h * 0.58, w * 0.485, h * 0.573);
+      ctx.moveTo(w * 0.41, h * 0.57);
+      ctx.bezierCurveTo(w * 0.44, h * 0.54, w * 0.475, h * 0.533, w * 0.5, h * 0.546);
+      ctx.bezierCurveTo(w * 0.525, h * 0.533, w * 0.56, h * 0.54, w * 0.59, h * 0.57);
+      ctx.bezierCurveTo(w * 0.56, h * 0.62, w * 0.525, h * 0.633, w * 0.5, h * 0.633);
+      ctx.bezierCurveTo(w * 0.475, h * 0.633, w * 0.44, h * 0.62, w * 0.41, h * 0.57);
       ctx.closePath();
       ctx.fill();
     } else if (activeCategory === "eyeshadow") {
@@ -306,19 +306,12 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
         if (activeCategory === "lipstick") {
           ctx.globalCompositeOperation = "multiply";
           ctx.beginPath();
-          ctx.moveTo(width * 0.48, height * 0.57);
-          ctx.bezierCurveTo(width * 0.49, height * 0.56, width * 0.495, height * 0.558, width * 0.5, height * 0.562);
-          ctx.bezierCurveTo(width * 0.505, height * 0.558, width * 0.51, height * 0.56, width * 0.52, height * 0.57);
-          ctx.bezierCurveTo(width * 0.51, height * 0.582, width * 0.505, height * 0.585, width * 0.5, height * 0.585);
-          ctx.bezierCurveTo(width * 0.495, height * 0.585, width * 0.49, height * 0.582, width * 0.48, height * 0.57);
+          ctx.moveTo(width * 0.41, height * 0.57);
+          ctx.bezierCurveTo(width * 0.44, height * 0.54, width * 0.475, height * 0.533, width * 0.5, height * 0.546);
+          ctx.bezierCurveTo(width * 0.525, height * 0.533, width * 0.56, height * 0.54, width * 0.59, height * 0.57);
+          ctx.bezierCurveTo(width * 0.56, height * 0.62, width * 0.525, height * 0.633, width * 0.5, height * 0.633);
+          ctx.bezierCurveTo(width * 0.475, height * 0.633, width * 0.44, height * 0.62, width * 0.41, height * 0.57);
           ctx.closePath();
-          ctx.fill();
-
-          ctx.fillStyle = selectedShade.hex;
-          ctx.globalAlpha = (opacity / 100) * 0.85;
-          ctx.globalCompositeOperation = "source-over";
-          ctx.beginPath();
-          ctx.ellipse(width * 0.5, height * 0.572, width * 0.02, height * 0.009, 0, 0, Math.PI * 2);
           ctx.fill();
         } else if (activeCategory === "eyeshadow") {
           ctx.globalCompositeOperation = "source-over";
@@ -504,10 +497,10 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
                     </radialGradient>
                   </defs>
 
-                  {/* 1. LIPSTICK: Ultra Micro Lip Polygon */}
+                  {/* 1. LIPSTICK: Full Anatomical Lip Polygon */}
                   {activeCategory === "lipstick" && (
                     <path
-                      d="M 194 172 C 196 170, 198 169, 200 170 C 202 169, 204 170, 206 172 C 204 174, 202 175, 200 175 C 198 175, 196 174, 194 172 Z"
+                      d="M 165 172 C 175 162, 190 160, 200 164 C 210 160, 225 162, 235 172 C 225 186, 210 190, 200 190 C 190 190, 175 186, 165 172 Z"
                       fill={selectedShade.hex}
                       fillOpacity={opacity / 100}
                       style={{ mixBlendMode: "multiply" }}
