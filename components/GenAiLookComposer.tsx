@@ -60,25 +60,81 @@ export default function GenAiLookComposer() {
   const [customPrompt, setCustomPrompt] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  const getImageForPrompt = (p: string) => {
+    const q = p.toLowerCase();
+    if (q.includes("male") || q.includes("man") || q.includes("guy") || q.includes("grooming")) {
+      return {
+        image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80",
+        lip: "Matte Hydrating Balm #001",
+        eye: "Natural Brow Sculpt #101",
+        prods: [
+          { name: "Matte Hydrating Lip Balm", price: "$24.00" },
+          { name: "Precision Brow & Beard Definer", price: "$28.00" },
+          { name: "Mattifying Sebum Control Elixir", price: "$42.00" }
+        ]
+      };
+    }
+    if (q.includes("dry") || q.includes("hydration") || q.includes("moisture") || q.includes("glass")) {
+      return {
+        image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=80",
+        lip: "Hydrating Dewy Tint #204",
+        eye: "Glass Luminizer #101",
+        prods: [
+          { name: "3D Hyaluronic Hydration Serum", price: "$46.00" },
+          { name: "Dewy Glass-Skin Essence", price: "$38.00" }
+        ]
+      };
+    }
+    if (q.includes("oil") || q.includes("acne") || q.includes("matte") || q.includes("pore")) {
+      return {
+        image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+        lip: "Velvet Satin Neutral #405",
+        eye: "Soft Focus Matte Nude #202",
+        prods: [
+          { name: "Oil-Control Salicylic Acid Cleanser", price: "$32.00" },
+          { name: "Zero-Shine Mattifying Primer", price: "$36.00" }
+        ]
+      };
+    }
+    if (q.includes("neon") || q.includes("cyber") || q.includes("purple") || q.includes("futuristic")) {
+      return {
+        image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+        lip: "Plum Chrome Metallic #809",
+        eye: "Electric Violet Liner #309",
+        prods: [
+          { name: "Holographic High-Pigment Liner", price: "$29.00" },
+          { name: "Chrome Metallic Lip Stain", price: "$36.00" }
+        ]
+      };
+    }
+    return {
+      image: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80",
+      lip: "Custom Pigment Blend #999",
+      eye: "Multi-Reflective Pearl #701",
+      prods: [
+        { name: "Custom Pigment Blend Kit", price: "$48.00" },
+        { name: "Pearl Luminizer Serum", price: "$42.00" }
+      ]
+    };
+  };
+
   const handleSynthesize = () => {
     if (!customPrompt) return;
     setIsGenerating(true);
     setTimeout(() => {
       setIsGenerating(false);
+      const match = getImageForPrompt(customPrompt);
       setActiveLook({
         id: "custom-gen-" + Date.now(),
         title: "Custom GenAI Look: " + customPrompt.slice(0, 24) + "...",
         category: "Custom Prompt",
         prompt: customPrompt,
-        image: "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?auto=format&fit=crop&w=800&q=80",
-        lipShade: "Custom Pigment Blend #999",
-        eyeShade: "Multi-Reflective Pearl #701",
-        products: [
-          { name: "Custom Pigment Blend Kit", price: "$48.00" },
-          { name: "Pearl Luminizer Serum", price: "$42.00" }
-        ]
+        image: match.image,
+        lipShade: match.lip,
+        eyeShade: match.eye,
+        products: match.prods
       });
-    }, 2000);
+    }, 1800);
   };
 
   return (
