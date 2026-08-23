@@ -13,7 +13,7 @@ interface LookPreset {
 }
 
 interface GenAiLookComposerProps {
-  onAddToCart?: () => void;
+  onAddToCart?: (item?: { title: string; price: string; category: string; image?: string }) => void;
 }
 
 export default function GenAiLookComposer({ onAddToCart }: GenAiLookComposerProps = {}) {
@@ -277,7 +277,7 @@ export default function GenAiLookComposer({ onAddToCart }: GenAiLookComposerProp
             ))}
           </div>
 
-          <button onClick={() => onAddToCart && onAddToCart()} className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white font-bold text-xs shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] transition-all">
+          <button onClick={() => onAddToCart && onAddToCart({ title: activeLook.title, price: "$90.00", category: "GenAI Look Bundle", image: activeLook.image })} className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white font-bold text-xs shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] transition-all">
             <ShoppingCart className="w-4 h-4" />
             <span>Add Complete Look Bundle to Cart</span>
           </button>

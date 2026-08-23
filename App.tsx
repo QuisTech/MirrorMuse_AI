@@ -12,13 +12,38 @@ import PerfectApiConsole from "./components/PerfectApiConsole";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import LivePriceSearch from "./components/LivePriceSearch";
 
+export interface CartItem {
+  id: string;
+  title: string;
+  price: string;
+  category: string;
+  image?: string;
+}
+
 export default function App() {
   const [activeModule, setActiveModule] = useState<
     "tryon" | "skin" | "genai" | "apiconsole" | "storefront" | "kanban" | "workspace" | "chat" | "dashboard"
   >("tryon");
 
   const [activeDemo, setActiveDemo] = useState<boolean>(false);
-  const [cartCount, setCartCount] = useState<number>(3);
+  const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
+
+  const [cartItems, setCartItems] = useState<CartItem[]>([
+    { id: "c1", title: "Velvet Rose Lip Shade #402", price: "$34.00", category: "AR Try-On", image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80" },
+    { id: "c2", title: "3D Hyaluronic Hydration Serum", price: "$46.00", category: "AI Diagnostic", image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=200&q=80" },
+    { id: "c3", title: "Celestial Gold Eyeshadow Palette", price: "$44.00", category: "GenAI Look", image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=200&q=80" }
+  ]);
+
+  const handleAddItem = (item?: { title?: string; price?: string; category?: string; image?: string }) => {
+    const newItem: CartItem = {
+      id: "cart-" + Date.now() + Math.random().toString(36).substr(2, 4),
+      title: item?.title || "Custom Cosmetics SKU",
+      price: item?.price || "$36.00",
+      category: item?.category || "Cosmetic Item",
+      image: item?.image || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=200&q=80"
+    };
+    setCartItems((prev) => [newItem, ...prev]);
+  };
 
   // Kanban Tasks
   const [tasks] = useState([
@@ -155,8 +180,16 @@ export default function App() {
           })}
         </div>
 
-        {/* Action Button */}
+        {/* Action Buttons */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCartDrawer(true)}
+            className="px-3.5 py-2.5 rounded-xl bg-pink-500 hover:bg-pink-400 text-white font-bold text-xs shadow-lg transition-all cursor-pointer flex items-center gap-2"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span>Cart ({cartItems.length})</span>
+          </button>
+
           <button
             onClick={() => setActiveDemo(!activeDemo)}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg transition-all cursor-pointer flex items-center gap-2"
@@ -195,13 +228,13 @@ export default function App() {
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
 
         {/* 1. AR VIRTUAL TRY-ON MODULE */}
-        {activeModule === "tryon" && <VirtualTryOnStudio onAddToCart={() => setCartCount(c => c + 1)} />}
+        {activeModule === "tryon" && <VirtualTryOnStudio onAddToCart={(item) => handleAddItem(item)} />}
 
         {/* 2. AI SKIN DIAGNOSTIC LAB MODULE */}
-        {activeModule === "skin" && <SkinAnalysisLab onAddToCart={() => setCartCount(c => c + 1)} />}
+        {activeModule === "skin" && <SkinAnalysisLab onAddToCart={(item) => handleAddItem(item)} />}
 
         {/* 3. GENAI LOOK COMPOSER MODULE */}
-        {activeModule === "genai" && <GenAiLookComposer onAddToCart={() => setCartCount(c => c + 1)} />}
+        {activeModule === "genai" && <GenAiLookComposer onAddToCart={(item) => handleAddItem(item)} />}
 
         {/* 4. PERFECT CORP API CONSOLE MODULE */}
         {activeModule === "apiconsole" && <PerfectApiConsole />}
@@ -217,8 +250,8 @@ export default function App() {
                 <h2 className="text-lg font-bold text-white">MirrorMuse AI Beauty & Hardware Marketplace</h2>
                 <p className="text-xs text-gray-400">Discover AR-compatible cosmetics and AI skin treatment products.</p>
               </div>
-              <button className="px-4 py-2 rounded-xl bg-pink-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg cursor-pointer">
-                <ShoppingCart className="w-4 h-4" /> Cart ({cartCount})
+              <button onClick={() => setShowCartDrawer(true)} className="px-4 py-2 rounded-xl bg-pink-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg cursor-pointer">
+                <ShoppingCart className="w-4 h-4" /> Cart ({cartItems.length})
               </button>
             </div>
 
@@ -235,7 +268,7 @@ export default function App() {
                   <div className="flex items-center justify-between">
                     <span className="text-amber-400 font-bold text-sm">{p.price}</span>
                     <button
-                      onClick={() => setCartCount(cartCount + 1)}
+                      onClick={() => handleAddItem(p)}
                       className="px-3.5 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white text-xs font-bold cursor-pointer transition-all"
                     >
                       + Add to Cart
@@ -365,6 +398,70 @@ export default function App() {
         {activeModule === "dashboard" && <AnalyticsDashboard />}
 
       </main>
+
+      {/* Cart Slide-Over Drawer Modal */}
+      {showCartDrawer && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md bg-[#0a0d14] border-l border-white/10 h-full p-6 flex flex-col justify-between shadow-2xl">
+            <div className="space-y-5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5 text-pink-400" />
+                  <h3 className="text-lg font-bold text-white">Your Shopping Cart</h3>
+                </div>
+                <button
+                  onClick={() => setShowCartDrawer(false)}
+                  className="px-3 py-1 rounded-lg bg-white/10 text-xs font-bold text-gray-300 hover:text-white cursor-pointer"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                {cartItems.length === 0 ? (
+                  <p className="text-xs text-gray-400 text-center py-8">Your cart is currently empty.</p>
+                ) : (
+                  cartItems.map((item) => (
+                    <div key={item.id} className="p-3.5 rounded-2xl bg-[#0d1017] border border-white/[0.08] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <img src={item.image || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=200&q=80"} alt={item.title} className="w-12 h-12 rounded-xl object-cover bg-black" />
+                        <div>
+                          <span className="text-[10px] font-bold text-pink-400 uppercase tracking-wide">{item.category}</span>
+                          <h4 className="text-xs font-bold text-white line-clamp-1">{item.title}</h4>
+                          <span className="text-xs font-extrabold text-amber-400 font-mono">{item.price}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setCartItems(cartItems.filter(i => i.id !== item.id))}
+                        className="text-xs text-gray-500 hover:text-rose-400 cursor-pointer p-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-white/10 pt-4 space-y-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400">Total Items:</span>
+                <span className="font-bold text-white font-mono">{cartItems.length} SKUs</span>
+              </div>
+              <button
+                onClick={() => {
+                  alert("Order Placed Successfully! Thank you for using MirrorMuse AI.");
+                  setCartItems([]);
+                  setShowCartDrawer(false);
+                }}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600 hover:from-pink-400 hover:to-indigo-500 text-white font-extrabold text-xs shadow-xl cursor-pointer"
+              >
+                Proceed to Checkout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

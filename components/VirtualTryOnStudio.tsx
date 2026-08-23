@@ -10,7 +10,7 @@ interface ProductShade {
 }
 
 interface VirtualTryOnStudioProps {
-  onAddToCart?: () => void;
+  onAddToCart?: (item?: { title: string; price: string; category: string; image?: string }) => void;
 }
 
 export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioProps = {}) {
