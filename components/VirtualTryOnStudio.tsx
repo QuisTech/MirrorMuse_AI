@@ -139,30 +139,72 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
   };
 
   const handleSnapLook = () => {
-    if (cameraStream && videoRef.current) {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (cameraStream && videoRef.current && ctx) {
       try {
         const video = videoRef.current;
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth || 640;
-        canvas.height = video.videoHeight || 480;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.translate(canvas.width, 0);
-          ctx.scale(-1, 1);
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const snapshotUrl = canvas.toDataURL("image/jpeg");
-          setCapturedSnapImage(snapshotUrl);
-        } else {
-          setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
+        const w = video.videoWidth || 640;
+        const h = video.videoHeight || 480;
+        canvas.width = w;
+        canvas.height = h;
+
+        ctx.save();
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, w, h);
+        ctx.restore();
+
+        if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
+          const grad = ctx.createRadialGradient(w * 0.5, h * 0.65, 0, w * 0.5, h * 0.65, w * 0.45);
+          const alphaHex = Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');
+          grad.addColorStop(0, selectedShade.hex + alphaHex);
+          grad.addColorStop(1, "transparent");
+          ctx.globalCompositeOperation = activeCategory === "lipstick" ? "multiply" : "screen";
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, w, h);
         }
+
+        setCapturedSnapImage(canvas.toDataURL("image/jpeg"));
+        setIsCapturing(true);
       } catch (e) {
-        console.warn("Webcam snapshot capture note:", e);
+        console.warn("Webcam snapshot composite note:", e);
         setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
+        setIsCapturing(true);
       }
+    } else if (ctx) {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const w = img.naturalWidth || 800;
+        const h = img.naturalHeight || 600;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+
+        if (!(tryOnResult?.result_image_url || tryOnResult?.output_url || tryOnResult?.data?.result_image_url)) {
+          const grad = ctx.createRadialGradient(w * 0.5, h * 0.65, 0, w * 0.5, h * 0.65, w * 0.45);
+          const alphaHex = Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');
+          grad.addColorStop(0, selectedShade.hex + alphaHex);
+          grad.addColorStop(1, "transparent");
+          ctx.globalCompositeOperation = activeCategory === "lipstick" ? "multiply" : "screen";
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, w, h);
+        }
+
+        setCapturedSnapImage(canvas.toDataURL("image/jpeg"));
+        setIsCapturing(true);
+      };
+      img.onerror = () => {
+        setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
+        setIsCapturing(true);
+      };
+      img.src = tryOnResult?.result_image_url || userImage;
     } else {
       setCapturedSnapImage(tryOnResult?.result_image_url || userImage);
+      setIsCapturing(true);
     }
-    setIsCapturing(true);
   };
 
   const handleAddToCart = () => {
