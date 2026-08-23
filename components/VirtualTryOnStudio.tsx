@@ -106,6 +106,14 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
 
   const handleAddToCart = () => {
     setAddedToCart(true);
+    if (onAddToCart) {
+      onAddToCart({
+        title: selectedShade.name,
+        price: selectedShade.price,
+        category: "AR Cosmetic Shade",
+        image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80"
+      });
+    }
     setTimeout(() => setAddedToCart(false), 2500);
   };
 
