@@ -75,8 +75,8 @@ export async function executeVirtualTryOn(params: {
 
     if (proxyRes.ok) {
       const proxyData = await proxyRes.json();
-      if (proxyData.data && proxyData.data.task_id) {
-        const taskId = proxyData.data.task_id;
+      const taskId = proxyData.data?.task_id || proxyData.task_id || proxyData.data?.id || proxyData.id;
+      if (taskId) {
         for (let i = 0; i < 6; i++) {
           await new Promise(r => setTimeout(r, 1500));
           const pollRes = await fetch(`/api/perfect/tryon?task_id=${encodeURIComponent(taskId)}`);
@@ -111,15 +111,18 @@ function computeHash(str: string): number {
 }
 
 function formatResults(results: any, rawData: any, imageStr?: string): SkinAnalysisResponse {
-  const hash = computeHash(imageStr || `${Date.now()}`);
-  const seed = (hash % 1000) + (Date.now() % 100);
+  const getRawScore = (metric: any, fallback: number) => {
+    if (typeof metric === "number") return Math.min(100, Math.max(0, metric));
+    if (metric && typeof metric.score === "number") return Math.min(100, Math.max(0, metric.score));
+    return fallback;
+  };
 
-  const textureScore = Math.max(65, Math.min(98, (results.texture?.score || 85) + (seed % 13) - 6));
-  const wrinkleScore = Math.max(68, Math.min(99, (results.wrinkle?.score || 90) + ((seed >> 2) % 11) - 5));
-  const poreScore = Math.max(62, Math.min(95, (results.pore?.score || 82) + ((seed >> 3) % 15) - 7));
-  const rednessScore = Math.max(70, Math.min(97, (results.redness?.score || 86) + ((seed >> 4) % 12) - 5));
-  const moistureScore = Math.max(55, Math.min(92, (results.moisture?.score || 72) + ((seed >> 5) % 18) - 8));
-  const firmnessScore = Math.max(72, Math.min(96, (results.firmness?.score || 84) + ((seed >> 6) % 11) - 4));
+  const textureScore = getRawScore(results.texture, 85);
+  const wrinkleScore = getRawScore(results.wrinkle, 90);
+  const poreScore = getRawScore(results.pore, 82);
+  const rednessScore = getRawScore(results.redness, 86);
+  const moistureScore = getRawScore(results.moisture, 72);
+  const firmnessScore = getRawScore(results.firmness, 84);
 
   const metrics: SkinMetricResult[] = [
     {
