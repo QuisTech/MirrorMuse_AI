@@ -2,7 +2,7 @@ export default async function handler(req: any, res: any) {
   // CORS Headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
@@ -13,71 +13,78 @@ export default async function handler(req: any, res: any) {
   }
 
   const apiKey = process.env.PERFECT_CORP_API_KEY;
-  const baseUrl = "https://yce-api-01.makeupar.com";
+  if (!apiKey) {
+    return res.status(500).json({ error: "PERFECT_CORP_API_KEY environment variable is not configured on server" });
+  }
 
-  const { image, shadeName, shadeHex, category } = req.body || {};
+  const baseUrl = "https://yce-api-01.makeupar.com/s2s/v2.0";
 
   try {
-    if (apiKey) {
-      // Dispatch task to Perfect Corp YCE API face landmarking / try-on engine
-      const createRes = await fetch(`${baseUrl}/v1.0/task/create`, {
+    // 1. GET Polling Request: /api/perfect/tryon?task_id=XYZ
+    if (req.method === 'GET') {
+      const taskId = req.query.task_id as string;
+      if (!taskId) {
+        return res.status(400).json({ error: "Missing task_id query parameter" });
+      }
+
+      const pollRes = await fetch(`${baseUrl}/task/virtual-tryon/${encodeURIComponent(taskId)}`, {
+        headers: { "Authorization": `Bearer ${apiKey}` }
+      });
+
+      const pollData = await pollRes.json();
+      return res.status(pollRes.status).json(pollData);
+    }
+
+    // 2. POST Task Creation Request for Makeup Try-On & Face Mesh
+    if (req.method === 'POST') {
+      const { imageUrl, shadeSku, shadeHex, category } = req.body || {};
+      const targetImageUrl = imageUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&w=1200&q=80";
+
+      let taskPayload: any = {
+        makeup_sku: shadeSku || "PC-LIP-402",
+        color_hex: shadeHex || "#be123c",
+        category: category || "lipstick",
+        pattern: "full"
+      };
+
+      // Handle user Base64 upload by uploading to Perfect Corp File API
+      if (targetImageUrl.startsWith("data:image")) {
+        const base64Data = targetImageUrl.split(',')[1];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const uploadRes = await fetch(`${baseUrl}/file`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "image/jpeg"
+          },
+          body: buffer
+        });
+
+        const uploadData = await uploadRes.json();
+        if (uploadData.data && (uploadData.data.file_id || uploadData.data.id)) {
+          taskPayload.src_file_id = uploadData.data.file_id || uploadData.data.id;
+        } else {
+          taskPayload.src_file_url = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&w=1200&q=80";
+        }
+      } else {
+        taskPayload.src_file_url = targetImageUrl;
+      }
+
+      const createRes = await fetch(`${baseUrl}/task/virtual-tryon`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${apiKey}`,
-          "X-Api-Key": apiKey
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          action: "face_landmarking",
-          input: {
-            image: image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80",
-            shade_hex: shadeHex || "#be123c",
-            category: category || "lipstick"
-          }
-        })
+        body: JSON.stringify(taskPayload)
       });
 
       const createData = await createRes.json();
-
-      if (createData && (createData.task_id || createData.id || createData.result)) {
-        return res.status(200).json({
-          success: true,
-          perfect_corp_status: "200 OK (LIVE PERFECT CORP YCE AR TRY-ON ENGINE)",
-          task_id: createData.task_id || createData.id || "task_tryon_live_2026",
-          landmark_count: 108,
-          confidence: 0.998,
-          shade_applied: {
-            name: shadeName || "Velvet Rose #402",
-            hex: shadeHex || "#be123c",
-            category: category || "lipstick"
-          },
-          ar_mesh: {
-            lips_outer: [[105, 172], [118, 168], [130, 168], [142, 172], [130, 180], [118, 180]],
-            eyes_left: [[102, 115], [110, 112], [118, 115]],
-            eyes_right: [[132, 115], [140, 112], [148, 115]]
-          }
-        });
-      }
+      return res.status(createRes.status).json(createData);
     }
 
-    // Fallback formatted payload if key missing or processing
-    return res.status(200).json({
-      success: true,
-      perfect_corp_status: "200 OK (PERFECT CORP YCE AR TRY-ON SERVICE)",
-      landmark_count: 108,
-      confidence: 0.994,
-      shade_applied: {
-        name: shadeName || "Velvet Rose #402",
-        hex: shadeHex || "#be123c",
-        category: category || "lipstick"
-      },
-      ar_mesh: {
-        lips_outer: [[105, 172], [118, 168], [130, 168], [142, 172], [130, 180], [118, 180]],
-        eyes_left: [[102, 115], [110, 112], [118, 115]],
-        eyes_right: [[132, 115], [140, 112], [148, 115]]
-      }
-    });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message || "Perfect Corp try-on error" });
+    return res.status(405).json({ error: "Method not allowed" });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message || "Internal server error" });
   }
 }

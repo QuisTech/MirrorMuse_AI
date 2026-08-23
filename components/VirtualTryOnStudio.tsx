@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Sparkles, Camera, Check, ShoppingCart, Sliders, Eye, RefreshCw, Layers, ShieldCheck, Heart, Upload, Video, VideoOff } from "lucide-react";
+import { executeVirtualTryOn } from "../src/services/perfectCorp";
 
 interface ProductShade {
   name: string;
@@ -107,20 +108,12 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
 
   const handleSelectShade = async (shade: ProductShade) => {
     setSelectedShade(shade);
-    try {
-      await fetch("/api/perfect/tryon", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          shadeName: shade.name,
-          shadeHex: shade.hex,
-          category: activeCategory,
-          image: userImage
-        })
-      });
-    } catch (e) {
-      console.error("Perfect Corp Try-On dispatch error:", e);
-    }
+    await executeVirtualTryOn({
+      imageUrl: userImage,
+      shadeSku: shade.sku,
+      shadeHex: shade.hex,
+      category: activeCategory
+    });
   };
 
   const handleAddToCart = () => {

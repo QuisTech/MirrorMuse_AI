@@ -59,6 +59,43 @@ export async function executeSkinAnalysis(imageUrl?: string): Promise<SkinAnalys
   return getFallbackDiagnosticResults(targetImage);
 }
 
+export async function executeVirtualTryOn(params: {
+  imageUrl?: string;
+  shadeSku?: string;
+  shadeHex?: string;
+  category?: string;
+}): Promise<any> {
+  const { imageUrl, shadeSku, shadeHex, category } = params;
+  try {
+    const proxyRes = await fetch("/api/perfect/tryon", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl, shadeSku, shadeHex, category })
+    });
+
+    if (proxyRes.ok) {
+      const proxyData = await proxyRes.json();
+      if (proxyData.data && proxyData.data.task_id) {
+        const taskId = proxyData.data.task_id;
+        for (let i = 0; i < 6; i++) {
+          await new Promise(r => setTimeout(r, 1500));
+          const pollRes = await fetch(`/api/perfect/tryon?task_id=${encodeURIComponent(taskId)}`);
+          if (pollRes.ok) {
+            const pollData = await pollRes.json();
+            if (pollData.data && pollData.data.task_status === "success") {
+              return pollData.data;
+            }
+          }
+        }
+      }
+      return proxyData;
+    }
+  } catch (err) {
+    console.warn("Virtual Try-On S2S dispatch note:", err);
+  }
+  return null;
+}
+
 function computeHash(str: string): number {
   let hash = 0;
   if (!str) return 42;
