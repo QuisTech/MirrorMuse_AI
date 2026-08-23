@@ -1,10 +1,12 @@
 import React, { useState, useRef } from "react";
-import { Sparkles, Scan, CheckCircle2, Upload, Camera, RefreshCw, ShoppingBag, ShieldCheck, ArrowRight, Activity, Zap } from "lucide-react";
+import { Sparkles, Scan, CheckCircle2, Upload, Camera, RefreshCw, ShoppingBag, ShieldCheck, ArrowRight, Activity, Zap, Video, VideoOff } from "lucide-react";
 import { executeSkinAnalysis, SkinAnalysisResponse } from "../src/services/perfectCorp";
 
 export default function SkinAnalysisLab() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=80");
+  const [isLiveCamera, setIsLiveCamera] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [analysisData, setAnalysisData] = useState<SkinAnalysisResponse>({
@@ -26,9 +28,48 @@ export default function SkinAnalysisLab() {
     ]
   });
 
+  // Toggle Live Webcam Streaming
+  const toggleLiveCamera = async () => {
+    if (isLiveCamera) {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+      setIsLiveCamera(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setIsLiveCamera(true);
+      } catch (e) {
+        alert("Camera permission denied or camera not available.");
+      }
+    }
+  };
+
+  const captureWebcamSnapshot = (): string => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas");
+      canvas.width = videoRef.current.videoWidth || 640;
+      canvas.height = videoRef.current.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL("image/jpeg", 0.9);
+      }
+    }
+    return userImage;
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (isLiveCamera) toggleLiveCamera();
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
@@ -41,8 +82,13 @@ export default function SkinAnalysisLab() {
 
   const handleStartScan = async () => {
     setIsScanning(true);
+    let targetImage = userImage;
+    if (isLiveCamera) {
+      targetImage = captureWebcamSnapshot();
+    }
+
     try {
-      const result = await executeSkinAnalysis(userImage);
+      const result = await executeSkinAnalysis(targetImage);
       setAnalysisData(result);
     } catch (e) {
       console.error("Scan error:", e);
@@ -75,16 +121,28 @@ export default function SkinAnalysisLab() {
             </span>
           </div>
           <h2 className="text-xl font-bold text-white tracking-tight">AI Skin Analysis & Diagnostic Lab</h2>
-          <p className="text-xs text-gray-400">Upload your own photo or selfie to run a live dermatological analysis via Perfect Corp API.</p>
+          <p className="text-xs text-gray-400">Open your live camera or upload a photo to run real-time dermatological scanning.</p>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleLiveCamera}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer shadow-lg ${
+              isLiveCamera
+                ? "bg-rose-600 border-rose-500 text-white animate-pulse"
+                : "bg-gradient-to-r from-cyan-600 to-blue-600 border-cyan-500 text-white hover:opacity-90"
+            }`}
+          >
+            {isLiveCamera ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+            <span>{isLiveCamera ? "Turn Off Live Camera" : "Enable Live Laptop Camera"}</span>
+          </button>
+
           <button
             onClick={() => fileInputRef.current?.click()}
             className="px-4 py-2.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-bold text-white flex items-center gap-2 cursor-pointer transition-all"
           >
             <Upload className="w-4 h-4 text-cyan-400" />
-            <span>Upload Your Photo / Selfie</span>
+            <span>Upload Photo</span>
           </button>
 
           <button
@@ -93,7 +151,7 @@ export default function SkinAnalysisLab() {
             className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
           >
             {isScanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Scan className="w-4 h-4" />}
-            <span>{isScanning ? "Analyzing Your Photo..." : "Run AI Skin Scanner"}</span>
+            <span>{isScanning ? "Scanning Camera..." : "Run AI Skin Scanner"}</span>
           </button>
         </div>
       </div>
@@ -103,11 +161,21 @@ export default function SkinAnalysisLab() {
         {/* Left: Scan Camera / Image Viewport */}
         <div className="lg:col-span-5 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 space-y-4 shadow-2xl relative">
           <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black flex items-center justify-center">
-            <img
-              src={userImage}
-              alt="Skin Scan Subject"
-              className={`w-full h-full object-cover transition-all duration-500 ${isScanning ? "brightness-125 contrast-125" : ""}`}
-            />
+            {isLiveCamera ? (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover transform -scale-x-100"
+              />
+            ) : (
+              <img
+                src={userImage}
+                alt="Skin Scan Subject"
+                className={`w-full h-full object-cover transition-all duration-500 ${isScanning ? "brightness-125 contrast-125" : ""}`}
+              />
+            )}
 
             {/* Scanning Laser Beam Effect */}
             {isScanning && (
@@ -144,7 +212,7 @@ export default function SkinAnalysisLab() {
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-cyan-400" />
                 <span className="font-bold text-white">
-                  {isScanning ? "Contacting Perfect Corp API..." : "Your Custom Photo Analysis Ready"}
+                  {isScanning ? "Contacting Perfect Corp API..." : isLiveCamera ? "Live Laptop Camera Active" : "Diagnostic Target Ready"}
                 </span>
               </div>
               <span className="text-[10px] font-mono text-gray-400">PERFECT_SKIN_AI</span>

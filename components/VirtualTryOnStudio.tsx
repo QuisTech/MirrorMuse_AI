@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import { Sparkles, Camera, Check, ShoppingCart, Sliders, Eye, RefreshCw, Layers, ShieldCheck, Heart, Upload } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Sparkles, Camera, Check, ShoppingCart, Sliders, Eye, RefreshCw, Layers, ShieldCheck, Heart, Upload, Video, VideoOff } from "lucide-react";
 
 interface ProductShade {
   name: string;
@@ -12,6 +12,8 @@ interface ProductShade {
 export default function VirtualTryOnStudio() {
   const [activeCategory, setActiveCategory] = useState<"lipstick" | "blush" | "eyeshadow" | "foundation" | "eyewear">("lipstick");
   const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80");
+  const [isLiveCamera, setIsLiveCamera] = useState<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedShade, setSelectedShade] = useState<ProductShade>({
@@ -56,9 +58,34 @@ export default function VirtualTryOnStudio() {
     ]
   };
 
+  // Toggle Live Webcam Streaming
+  const toggleLiveCamera = async () => {
+    if (isLiveCamera) {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject = null;
+      }
+      setIsLiveCamera(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+        setIsLiveCamera(true);
+      } catch (e) {
+        alert("Camera permission denied or camera not available.");
+      }
+    }
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (isLiveCamera) toggleLiveCamera();
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
@@ -98,16 +125,28 @@ export default function VirtualTryOnStudio() {
             </span>
           </div>
           <h2 className="text-xl font-bold text-white tracking-tight">Interactive AR Virtual Try-On Studio</h2>
-          <p className="text-xs text-gray-400">Experience hyper-realistic lipstick, foundation, and accessory overlays on sample models or your own photo.</p>
+          <p className="text-xs text-gray-400">Experience real-time webcam AR try-on, upload your photo, or test with sample models.</p>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleLiveCamera}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer shadow-lg ${
+              isLiveCamera
+                ? "bg-rose-600 border-rose-500 text-white animate-pulse"
+                : "bg-gradient-to-r from-indigo-600 to-purple-600 border-indigo-500 text-white hover:opacity-90"
+            }`}
+          >
+            {isLiveCamera ? <VideoOff className="w-4 h-4" /> : <Video className="w-4 h-4" />}
+            <span>{isLiveCamera ? "Turn Off Live Camera" : "Enable Live Laptop Camera"}</span>
+          </button>
+
           <button
             onClick={() => fileInputRef.current?.click()}
             className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-pink-500/40 bg-pink-500/10 text-pink-300 hover:bg-pink-500/20 flex items-center gap-1.5 cursor-pointer shadow-lg"
           >
             <Upload className="w-4 h-4" />
-            <span>Try On Your Photo / Selfie</span>
+            <span>Upload Photo</span>
           </button>
 
           <button
@@ -141,12 +180,22 @@ export default function VirtualTryOnStudio() {
         {/* Left: Interactive AR Camera Viewport */}
         <div className="lg:col-span-8 rounded-3xl bg-[#0a0d14] border border-white/[0.08] p-4 relative overflow-hidden shadow-2xl space-y-4">
           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black flex items-center justify-center group">
-            {/* Base Portrait Image */}
-            <img
-              src={userImage}
-              alt="Live AR Viewport"
-              className="w-full h-full object-cover"
-            />
+            {/* Live Camera Video Feed or Base Portrait Image */}
+            {isLiveCamera ? (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover transform -scale-x-100"
+              />
+            ) : (
+              <img
+                src={userImage}
+                alt="Live AR Viewport"
+                className="w-full h-full object-cover"
+              />
+            )}
 
             {/* Simulated Live AR Overlay Shading */}
             <div
@@ -181,13 +230,13 @@ export default function VirtualTryOnStudio() {
                 </svg>
                 <div className="absolute top-4 left-4 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-mono text-indigo-300 flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>PERFECT_AR_TRACKING: 108 LANDMARKS ACTIVE</span>
+                  <span>{isLiveCamera ? "WEBRTC_CAMERA: LIVE STREAMING 60FPS" : "PERFECT_AR_TRACKING: 108 LANDMARKS ACTIVE"}</span>
                 </div>
               </div>
             )}
 
             {/* Split Comparison View */}
-            {comparisonMode && (
+            {comparisonMode && !isLiveCamera && (
               <div className="absolute inset-y-0 left-0 w-1/2 border-r-2 border-white/80 overflow-hidden bg-black">
                 <img
                   src={userImage}
