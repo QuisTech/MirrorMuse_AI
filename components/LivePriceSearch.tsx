@@ -24,8 +24,9 @@ export default function LivePriceSearch() {
       const res = await fetch(`/api/serp/shopping?q=${encodeURIComponent(searchQuery)}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.results && Array.isArray(data.results)) {
-          setResults(data.results);
+        const items = data.shopping_results || data.results || [];
+        if (Array.isArray(items)) {
+          setResults(items);
         }
       }
     } catch (err) {
