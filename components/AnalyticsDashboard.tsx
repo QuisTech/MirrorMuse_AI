@@ -1,11 +1,19 @@
 import React from "react";
 import { BarChart3, Activity, ShieldCheck, Zap, Server, Globe } from "lucide-react";
 
+export interface TelemetryLog {
+  time: string;
+  service: string;
+  status: string;
+  detail: string;
+}
+
 interface AnalyticsDashboardProps {
+  logs?: TelemetryLog[];
   lastOrder?: { orderId: string; total: string } | null;
 }
 
-export default function AnalyticsDashboard({ lastOrder }: AnalyticsDashboardProps = {}) {
+export default function AnalyticsDashboard({ logs, lastOrder }: AnalyticsDashboardProps = {}) {
   const metrics = [
     { label: "Landmark Tracking SLA", value: "60 FPS", change: "+12%", desc: "108 point mesh alignment in <14ms" },
     { label: "Skin Scan Accuracy", value: "99.4%", change: "+2.1%", desc: "6-layer dermatological neural diagnostic" },
@@ -13,20 +21,14 @@ export default function AnalyticsDashboard({ lastOrder }: AnalyticsDashboardProp
     { label: "Active Agent Nodes", value: "3 Fleet", change: "Online", desc: "VisionAgent, SkinInsightAgent, StyleComposer" }
   ];
 
-  const sponsorLogs = [
-    ...(lastOrder
-      ? [{
-          time: new Date().toLocaleTimeString('en-US', { hour12: false }),
-          service: "Xano Checkout DB",
-          status: "200 OK (PERSISTED)",
-          detail: `Persisted checkout order transaction ${lastOrder.orderId} (${lastOrder.total}) to Xano database instance`
-        }]
-      : []),
-    { time: "22:20:14", service: "Perfect Corp YCE", status: "200 OK", detail: "AR Try-On shade rendering payload dispatched (PC-LIP-402)" },
-    { time: "22:19:42", service: "Perfect Corp Skin AI", status: "200 OK", detail: "Multi-layer diagnostic scan calculated (Composite Score: 83)" },
-    { time: "22:18:10", service: "Xano Backend", status: "200 OK", detail: "Persisted agent workflow session telemetry to Xano DB" },
-    { time: "22:15:04", service: "SerpApi Shopping", status: "200 OK", detail: "Retrieved real-time market pricing for Hyaluronic Acid SKU" }
+  const defaultLogs: TelemetryLog[] = [
+    { time: "14:50:14", service: "Perfect Corp YCE", status: "200 OK", detail: "AR Try-On shade rendering payload dispatched (PC-LIP-402)" },
+    { time: "14:48:42", service: "Perfect Corp Skin AI", status: "200 OK", detail: "Multi-layer diagnostic scan calculated (Composite Score: 83)" },
+    { time: "14:45:10", service: "Xano Backend DB", status: "200 OK", detail: "Persisted agent workflow session telemetry to Xano DB" },
+    { time: "14:40:04", service: "SerpApi Shopping", status: "200 OK", detail: "Retrieved real-time market pricing for Hyaluronic Acid SKU" }
   ];
+
+  const displayLogs = logs && logs.length > 0 ? logs : defaultLogs;
 
   return (
     <div className="space-y-6 animate-fadeIn font-sans">
@@ -63,8 +65,8 @@ export default function AnalyticsDashboard({ lastOrder }: AnalyticsDashboardProp
         </div>
 
         <div className="space-y-2 font-mono">
-          {sponsorLogs.map((log, idx) => (
-            <div key={idx} className="p-3 rounded-xl bg-black/60 border border-white/[0.06] flex items-center justify-between text-xs">
+          {displayLogs.map((log, idx) => (
+            <div key={idx} className="p-3 rounded-xl bg-black/60 border border-white/[0.06] flex items-center justify-between text-xs animate-fadeIn">
               <div className="flex items-center gap-3">
                 <span className="text-gray-500 text-[10px]">{log.time}</span>
                 <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold text-[10px]">
@@ -72,7 +74,7 @@ export default function AnalyticsDashboard({ lastOrder }: AnalyticsDashboardProp
                 </span>
                 <span className="text-gray-300">{log.detail}</span>
               </div>
-              <span className="text-emerald-400 font-bold text-[11px]">{log.status}</span>
+              <span className="text-emerald-400 font-bold text-[11px] shrink-0">{log.status}</span>
             </div>
           ))}
         </div>

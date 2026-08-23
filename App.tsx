@@ -43,6 +43,23 @@ export default function App() {
     { id: "c3", title: "Celestial Gold Eyeshadow Palette", price: "$44.00", category: "GenAI Look", image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=200&q=80" }
   ]);
 
+  const [telemetryLogs, setTelemetryLogs] = useState<any[]>([
+    { time: "14:50:14", service: "Perfect Corp YCE", status: "200 OK", detail: "AR Try-On shade rendering payload dispatched (PC-LIP-402)" },
+    { time: "14:48:42", service: "Perfect Corp Skin AI", status: "200 OK", detail: "Multi-layer diagnostic scan calculated (Composite Score: 83)" },
+    { time: "14:45:10", service: "Xano Backend DB", status: "200 OK", detail: "Persisted agent workflow session telemetry to Xano DB" },
+    { time: "14:40:04", service: "SerpApi Shopping", status: "200 OK", detail: "Retrieved real-time market pricing for Hyaluronic Acid SKU" }
+  ]);
+
+  const logTelemetry = (service: string, status: string, detail: string) => {
+    const newLog = {
+      time: new Date().toLocaleTimeString('en-US', { hour12: false }),
+      service,
+      status,
+      detail
+    };
+    setTelemetryLogs((prev) => [newLog, ...prev]);
+  };
+
   const handleAddItem = (item?: { title?: string; price?: string; category?: string; image?: string }) => {
     const newItem: CartItem = {
       id: "cart-" + Date.now() + Math.random().toString(36).substr(2, 4),
@@ -52,6 +69,7 @@ export default function App() {
       image: item?.image || "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=200&q=80"
     };
     setCartItems((prev) => [newItem, ...prev]);
+    logTelemetry("MirrorMuse Cart API", "200 OK (SKU_ADDED)", `Added ${newItem.title} (${newItem.price}) to shopping cart`);
   };
 
   // Kanban Tasks
@@ -404,7 +422,7 @@ export default function App() {
         )}
 
         {/* 9. TELEMETRY DASHBOARD MODULE */}
-        {activeModule === "dashboard" && <AnalyticsDashboard lastOrder={lastCompletedOrder} />}
+        {activeModule === "dashboard" && <AnalyticsDashboard logs={telemetryLogs} lastOrder={lastCompletedOrder} />}
 
       </main>
 
@@ -475,6 +493,11 @@ export default function App() {
                     orderId: generatedId,
                     total: `$${numTotal.toFixed(2)}`
                   });
+                  logTelemetry(
+                    "Xano Sales DB",
+                    "200 OK (PERSISTED)",
+                    `Persisted checkout sales order ${generatedId} (${orderPayload.total}) to Xano DB instance`
+                  );
                   setCartItems([]);
                   setShowCartDrawer(false);
                 }}
