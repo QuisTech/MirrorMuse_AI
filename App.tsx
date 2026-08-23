@@ -10,6 +10,7 @@ import SkinAnalysisLab from "./components/SkinAnalysisLab";
 import GenAiLookComposer from "./components/GenAiLookComposer";
 import PerfectApiConsole from "./components/PerfectApiConsole";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
+import AutonomousDemoPresenter from "./components/AutonomousDemoPresenter";
 
 export default function App() {
   const [activeModule, setActiveModule] = useState<
@@ -172,6 +173,11 @@ export default function App() {
           <StudioWorkspace onTrigger={() => {}} isExecuting={false} />
         </div>
       )}
+
+      {/* Autonomous Hackathon Demo Recorder HUD */}
+      <div className="max-w-7xl mx-auto w-full px-6 pt-4">
+        <AutonomousDemoPresenter onModuleChange={(m) => setActiveModule(m)} />
+      </div>
 
       {/* Dynamic Module Content View Area */}
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
