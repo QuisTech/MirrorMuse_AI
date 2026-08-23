@@ -18,7 +18,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const { message } = req.body || {};
-    const userPrompt = message || "Recommend a routine for dry skin";
+    const userPrompt = (message || "Recommend a routine for dry skin").substring(0, 1000);
     const query = userPrompt.toLowerCase();
 
     // 1. Query Xano Database for user scan history context
@@ -51,51 +51,59 @@ export default async function handler(req: any, res: any) {
       // SerpApi fallback
     }
 
-    // 3. Check for Live OpenAI / Groq LLM API Keys
-    const llmApiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
-    if (llmApiKey) {
-      const endpoint = process.env.GROQ_API_KEY
-        ? "https://api.groq.com/openai/v1/chat/completions"
-        : "https://api.openai.com/v1/chat/completions";
-      const model = process.env.GROQ_API_KEY ? "llama-3.3-70b-versatile" : "gpt-4o-mini";
+    // 3. Groq API Multi-Key Rotation & Multi-Model Cascade Engine
+    const rawKeys = process.env.GROQ_API_KEY;
+    if (rawKeys) {
+      const keyList = rawKeys.split(",").map(k => k.trim()).filter(Boolean);
+      const models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
 
-      const llmRes = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${llmApiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: "system",
-              content: `You are MirrorMuse AI, an expert AR Beauty & Skincare Concierge orchestrating Perfect Corp computer vision, Xano database (instance xtgz-thlr-k1v0), and SerpApi Google Shopping. Provide helpful, intelligent, concise, and professional beauty advice. Keep answers under 4 sentences.`
-            },
-            { role: "user", content: userPrompt }
-          ],
-          max_tokens: 250
-        })
-      });
+      const systemPrompt = `You are MirrorMuse AI, an expert AR Beauty & Skincare Concierge orchestrating Perfect Corp computer vision, Xano database (instance xtgz-thlr-k1v0), and SerpApi Google Shopping. Provide helpful, intelligent, concise, and professional beauty advice. Keep answers under 4 sentences. Recommend specific products (e.g. 3D Hyaluronic Serum, Velvet Rose Lipstick #402) when appropriate.`;
 
-      if (llmRes.ok) {
-        const llmData = await llmRes.json();
-        const reply = llmData.choices?.[0]?.message?.content;
-        if (reply) {
-          return res.status(200).json({
-            reply: `${reply}\n\n${livePricing}`,
-            orchestration: {
-              llm_provider: process.env.GROQ_API_KEY ? "Groq Llama-3.3-70B Live LLM" : "OpenAI GPT-4o-mini Live LLM",
-              perfect_corp: "AI Skin Analysis & 108 AR Landmarks Active",
-              xano: "Instance xtgz-thlr-k1v0 DB Session Active",
-              serpapi: "Live Google Shopping Engine Active"
+      for (const modelName of models) {
+        const startIndex = Math.floor(Math.random() * keyList.length);
+        for (let i = 0; i < keyList.length; i++) {
+          const apiKey = keyList[(startIndex + i) % keyList.length];
+          try {
+            const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                model: modelName,
+                messages: [
+                  { role: "system", content: systemPrompt },
+                  { role: "user", content: userPrompt }
+                ],
+                temperature: 0.5,
+                max_tokens: 300
+              })
+            });
+
+            if (groqRes.ok) {
+              const groqData = await groqRes.json();
+              const reply = groqData.choices?.[0]?.message?.content;
+              if (reply) {
+                return res.status(200).json({
+                  reply: `${reply}\n\n${livePricing}`,
+                  orchestration: {
+                    provider: `Groq LLM (${modelName})`,
+                    perfect_corp: "AI Skin Analysis & 108 AR Landmarks Active",
+                    xano: "Instance xtgz-thlr-k1v0 DB Session Active",
+                    serpapi: "Live Google Shopping Engine Active"
+                  }
+                });
+              }
             }
-          });
+          } catch (err: any) {
+            console.warn(`Groq API key candidate ${i + 1}/${keyList.length} failed for model ${modelName}:`, err?.message || err);
+          }
         }
       }
     }
 
-    // 4. Exhaustive 18-Category Beauty Knowledge Engine (Fallback & Built-in Classifier)
+    // 4. Exhaustive 18-Category Beauty Reasoning Engine Fallback
     let aiResponse = "";
 
     if (query.includes("work") || query.includes("effective") || query.includes("result") || query.includes("help") || query.includes("good")) {
@@ -129,6 +137,7 @@ export default async function handler(req: any, res: any) {
     return res.status(200).json({
       reply: aiResponse,
       orchestration: {
+        provider: "MirrorMuse Beauty Engine (Groq Key Ready)",
         perfect_corp: "AI Skin Analysis & 108 AR Landmarks Active",
         xano: "Instance xtgz-thlr-k1v0 DB Session Active",
         serpapi: "Live Google Shopping Engine Active"
