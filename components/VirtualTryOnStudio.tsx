@@ -151,92 +151,89 @@ export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioPr
     }
   };
 
-  const drawPigmentOnCanvas = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    ctx.save();
-    ctx.fillStyle = selectedShade.hex;
-    ctx.globalAlpha = opacity / 100;
-
-    if (activeCategory === "lipstick") {
-      ctx.globalCompositeOperation = "multiply";
-      ctx.beginPath();
-      ctx.moveTo(w * 0.41, h * 0.57);
-      ctx.bezierCurveTo(w * 0.44, h * 0.54, w * 0.475, h * 0.533, w * 0.5, h * 0.546);
-      ctx.bezierCurveTo(w * 0.525, h * 0.533, w * 0.56, h * 0.54, w * 0.59, h * 0.57);
-      ctx.bezierCurveTo(w * 0.56, h * 0.62, w * 0.525, h * 0.633, w * 0.5, h * 0.633);
-      ctx.bezierCurveTo(w * 0.475, h * 0.633, w * 0.44, h * 0.62, w * 0.41, h * 0.57);
-      ctx.closePath();
-      ctx.fill();
-    } else if (activeCategory === "eyeshadow") {
-      ctx.globalCompositeOperation = "soft-light";
-      ctx.beginPath();
-      ctx.ellipse(w * 0.42, h * 0.38, w * 0.05, h * 0.025, 0, 0, Math.PI * 2);
-      ctx.ellipse(w * 0.58, h * 0.38, w * 0.05, h * 0.025, 0, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (activeCategory === "blush") {
-      ctx.globalCompositeOperation = "soft-light";
-      ctx.beginPath();
-      ctx.ellipse(w * 0.35, h * 0.52, w * 0.07, h * 0.04, 0, 0, Math.PI * 2);
-      ctx.ellipse(w * 0.65, h * 0.52, w * 0.07, h * 0.04, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  };
-
   const handleSnapLook = () => {
+    const burnShadeOntoCanvas = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+      if (hasApiImage) return;
+
+      ctx.save();
+      ctx.globalCompositeOperation =
+        activeCategory === "lipstick" ? "multiply" : "soft-light";
+
+      const alpha = Math.min(1, Math.max(0, opacity / 100));
+      const gradient = ctx.createRadialGradient(
+        w * 0.5,
+        h * 0.62,
+        0,
+        w * 0.5,
+        h * 0.62,
+        Math.min(w, h) * 0.42
+      );
+      const a = Math.round(alpha * 180)
+        .toString(16)
+        .padStart(2, "0");
+      gradient.addColorStop(0, `${selectedShade.hex}${a}`);
+      gradient.addColorStop(1, `${selectedShade.hex}00`);
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
+    };
+
     if (cameraStream && videoRef.current) {
       try {
         const video = videoRef.current;
-        const canvas = document.createElement("canvas");
         const w = video.videoWidth || 640;
         const h = video.videoHeight || 480;
+        const canvas = document.createElement("canvas");
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.save();
-          ctx.translate(w, 0);
-          ctx.scale(-1, 1);
-          ctx.drawImage(video, 0, 0, w, h);
-          ctx.restore();
-
-          if (!hasApiImage) {
-            drawPigmentOnCanvas(ctx, w, h);
-          }
-          setCapturedSnapImage(canvas.toDataURL("image/jpeg", 0.95));
-        } else {
+        if (!ctx) {
           setCapturedSnapImage(displayImage);
+          setIsCapturing(true);
+          return;
         }
+
+        ctx.translate(w, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, 0, 0, w, h);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        burnShadeOntoCanvas(ctx, w, h);
+
+        setCapturedSnapImage(canvas.toDataURL("image/jpeg", 0.92));
+        setIsCapturing(true);
       } catch {
         setCapturedSnapImage(displayImage);
-      }
-      setIsCapturing(true);
-    } else {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const w = img.naturalWidth || 800;
-        const h = img.naturalHeight || 600;
-        canvas.width = w;
-        canvas.height = h;
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, w, h);
-          if (!hasApiImage) {
-            drawPigmentOnCanvas(ctx, w, h);
-          }
-          setCapturedSnapImage(canvas.toDataURL("image/jpeg", 0.95));
-        } else {
-          setCapturedSnapImage(displayImage);
-        }
         setIsCapturing(true);
-      };
-      img.onerror = () => {
+      }
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const w = img.naturalWidth || 800;
+      const h = img.naturalHeight || 600;
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
         setCapturedSnapImage(displayImage);
         setIsCapturing(true);
-      };
-      img.src = userImage;
-    }
+        return;
+      }
+      ctx.drawImage(img, 0, 0, w, h);
+      burnShadeOntoCanvas(ctx, w, h);
+      setCapturedSnapImage(canvas.toDataURL("image/jpeg", 0.92));
+      setIsCapturing(true);
+    };
+    img.onerror = () => {
+      setCapturedSnapImage(displayImage);
+      setIsCapturing(true);
+    };
+    img.src = displayImage;
   };
 
   const handleAddToCart = () => {
