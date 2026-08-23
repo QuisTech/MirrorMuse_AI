@@ -136,6 +136,17 @@ export default function PerfectApiConsole() {
           }
         };
         setActiveApi(updatedApi);
+      } else if (activeApi.id === "serpapi-search") {
+        const res = await fetch("/api/serp/shopping?q=Hyaluronic+Acid+Hydration+Serum");
+        const data = await res.json();
+        const latencyMs = Date.now() - start;
+        const updatedApi = {
+          ...activeApi,
+          latency: `${latencyMs}ms`,
+          status: 200,
+          responseBody: data
+        };
+        setActiveApi(updatedApi);
       } else {
         await new Promise(r => setTimeout(r, 800));
       }
