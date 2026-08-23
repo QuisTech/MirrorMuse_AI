@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Sparkles, Zap, Camera, Scan, Wand2, ShoppingBag, Layers, MessageSquare,
   Database, Code, Bot, Play, BarChart3, CheckCircle2, ShoppingCart, User,
-  Send, ArrowRight, ShieldCheck, Heart, Terminal, Sliders, Globe
+  Send, ArrowRight, ShieldCheck, Heart, Terminal, Sliders, Globe, Trash2
 } from "lucide-react";
 import StudioWorkspace from "./components/StudioWorkspace";
 import VirtualTryOnStudio from "./components/VirtualTryOnStudio";
@@ -436,12 +436,26 @@ export default function App() {
                   <ShoppingCart className="w-5 h-5 text-pink-400" />
                   <h3 className="text-lg font-bold text-white">Your Shopping Cart</h3>
                 </div>
-                <button
-                  onClick={() => setShowCartDrawer(false)}
-                  className="px-3 py-1 rounded-lg bg-white/10 text-xs font-bold text-gray-300 hover:text-white cursor-pointer"
-                >
-                  ✕ Close
-                </button>
+                <div className="flex items-center gap-2">
+                  {cartItems.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setCartItems([]);
+                        logTelemetry("MirrorMuse Cart API", "200 OK (CLEARED)", "Cleared all items from shopping cart");
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center gap-1 cursor-pointer transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Clear Cart</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowCartDrawer(false)}
+                    className="px-3 py-1 rounded-lg bg-white/10 text-xs font-bold text-gray-300 hover:text-white cursor-pointer"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
