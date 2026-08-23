@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import { Sparkles, Scan, CheckCircle2, Upload, Camera, RefreshCw, ShoppingBag, ShieldCheck, ArrowRight, Activity, Zap, Video, VideoOff } from "lucide-react";
 import { executeSkinAnalysis, SkinAnalysisResponse } from "../src/services/perfectCorp";
 
-export default function SkinAnalysisLab() {
+interface SkinAnalysisLabProps {
+  onAddToCart?: () => void;
+}
+
+export default function SkinAnalysisLab({ onAddToCart }: SkinAnalysisLabProps = {}) {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=80");
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -283,7 +287,7 @@ export default function SkinAnalysisLab() {
                 </h3>
                 <p className="text-xs text-gray-400">Tailored to your specific skin diagnostic scores.</p>
               </div>
-              <button className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-lg">
+              <button onClick={() => onAddToCart && onAddToCart()} className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-lg">
                 <ShoppingBag className="w-3.5 h-3.5" />
                 <span>Buy Complete Set</span>
               </button>
@@ -304,7 +308,7 @@ export default function SkinAnalysisLab() {
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-xs font-bold text-amber-400 block">{p.price}</span>
-                    <button className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1 mt-1">
+                    <button onClick={() => onAddToCart && onAddToCart()} className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1 mt-1 cursor-pointer">
                       <span>Add SKU</span> <ArrowRight className="w-3 h-3" />
                     </button>
                   </div>

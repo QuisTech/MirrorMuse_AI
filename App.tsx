@@ -195,13 +195,13 @@ export default function App() {
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
 
         {/* 1. AR VIRTUAL TRY-ON MODULE */}
-        {activeModule === "tryon" && <VirtualTryOnStudio />}
+        {activeModule === "tryon" && <VirtualTryOnStudio onAddToCart={() => setCartCount(c => c + 1)} />}
 
         {/* 2. AI SKIN DIAGNOSTIC LAB MODULE */}
-        {activeModule === "skin" && <SkinAnalysisLab />}
+        {activeModule === "skin" && <SkinAnalysisLab onAddToCart={() => setCartCount(c => c + 1)} />}
 
         {/* 3. GENAI LOOK COMPOSER MODULE */}
-        {activeModule === "genai" && <GenAiLookComposer />}
+        {activeModule === "genai" && <GenAiLookComposer onAddToCart={() => setCartCount(c => c + 1)} />}
 
         {/* 4. PERFECT CORP API CONSOLE MODULE */}
         {activeModule === "apiconsole" && <PerfectApiConsole />}

@@ -12,7 +12,11 @@ interface LookPreset {
   products: { name: string; price: string }[];
 }
 
-export default function GenAiLookComposer() {
+interface GenAiLookComposerProps {
+  onAddToCart?: () => void;
+}
+
+export default function GenAiLookComposer({ onAddToCart }: GenAiLookComposerProps = {}) {
   const presets: LookPreset[] = [
     {
       id: "golden-hour",
@@ -273,7 +277,7 @@ export default function GenAiLookComposer() {
             ))}
           </div>
 
-          <button className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white font-bold text-xs shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] transition-all">
+          <button onClick={() => onAddToCart && onAddToCart()} className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white font-bold text-xs shadow-xl flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.01] transition-all">
             <ShoppingCart className="w-4 h-4" />
             <span>Add Complete Look Bundle to Cart</span>
           </button>

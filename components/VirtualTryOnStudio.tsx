@@ -9,7 +9,11 @@ interface ProductShade {
   price: string;
 }
 
-export default function VirtualTryOnStudio() {
+interface VirtualTryOnStudioProps {
+  onAddToCart?: () => void;
+}
+
+export default function VirtualTryOnStudio({ onAddToCart }: VirtualTryOnStudioProps = {}) {
   const [activeCategory, setActiveCategory] = useState<"lipstick" | "blush" | "eyeshadow" | "foundation" | "eyewear">("lipstick");
   const [userImage, setUserImage] = useState<string>("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80");
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
