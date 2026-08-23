@@ -32,6 +32,10 @@ export default function App() {
     items: CartItem[];
     total: string;
   } | null>(null);
+  const [lastCompletedOrder, setLastCompletedOrder] = useState<{
+    orderId: string;
+    total: string;
+  } | null>(null);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([
     { id: "c1", title: "Velvet Rose Lip Shade #402", price: "$34.00", category: "AR Try-On", image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=200&q=80" },
@@ -400,7 +404,7 @@ export default function App() {
         )}
 
         {/* 9. TELEMETRY DASHBOARD MODULE */}
-        {activeModule === "dashboard" && <AnalyticsDashboard lastOrder={orderSuccessDetails} />}
+        {activeModule === "dashboard" && <AnalyticsDashboard lastOrder={lastCompletedOrder} />}
 
       </main>
 
@@ -461,9 +465,14 @@ export default function App() {
                     return acc + priceNum;
                   }, 0);
                   const generatedId = "MM-" + Math.floor(10000 + Math.random() * 90000) + "-AI";
-                  setOrderSuccessDetails({
+                  const orderPayload = {
                     orderId: generatedId,
                     items: [...cartItems],
+                    total: `$${numTotal.toFixed(2)}`
+                  };
+                  setOrderSuccessDetails(orderPayload);
+                  setLastCompletedOrder({
+                    orderId: generatedId,
                     total: `$${numTotal.toFixed(2)}`
                   });
                   setCartItems([]);
