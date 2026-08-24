@@ -13,16 +13,16 @@
 
 ---
 
-## 🏆 Multi-Sponsor API Architecture & Hackathon Alignment
+## 🏆 Multi-API Architecture & Sponsor Challenge Alignment
 
-MirrorMuse AI seamlessly integrates four flagship sponsor APIs to deliver an enterprise-grade consumer application:
+MirrorMuse AI integrates **Perfect Corp** as our primary sponsor challenge entry, combined with flagship API services for full-stack capability:
 
-| Sponsor API | Core Responsibilities & Integration |
-| :--- | :--- |
-| **`Perfect Corp API`** | Powers the 108 Landmark Face Mesh video tracking, real-time shade overlays, 6-layer dermatological neural skin diagnostics, and YCE digital-to-physical cosmetics pigment matching. |
-| **`SerpApi`** | Powers the live Google Shopping Market Price Comparison engine, executing real-time pricing queries across major retailers (**Sephora**, **Target**, and **Ulta**). |
-| **`Groq`** | Powers the ultra-low latency AI Beauty Copilot chatbot (`Llama 3.3 70B`) for instant personalized consultations and routine guidance. |
-| **`Xano`** | Powers the persistent backend database, recording user skin diagnostic histories, shade wishlist favorites, and checkout order receipt transactions. |
+| API Service | Role & Integration | Type |
+| :--- | :--- | :--- |
+| **`Perfect Corp API`** | Powers the 108 Landmark Face Mesh video tracking, real-time shade overlays, 6-layer dermatological neural skin diagnostics, and YCE digital-to-physical cosmetics pigment matching. | **Primary Sponsor Challenge** |
+| **`Groq`** | Powers the ultra-low latency AI Beauty Copilot chatbot (`Llama 3.3 70B`) for instant personalized consultations and routine guidance. | **AI Inference API** |
+| **`SerpApi`** | Powers the live Google Shopping Market Price Comparison engine, executing real-time pricing queries across major retailers (**Sephora**, **Target**, and **Ulta**). | **Live Price Search API** |
+| **`Xano`** | Powers the persistent backend database, recording user skin diagnostic histories, shade wishlist favorites, and checkout order receipt transactions. | **Backend & Database Infrastructure** |
 
 ---
 
