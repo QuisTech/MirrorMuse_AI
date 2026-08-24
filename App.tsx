@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Sparkles, Zap, Camera, Scan, Wand2, ShoppingBag, Layers, MessageSquare,
   Database, Code, Bot, Play, BarChart3, CheckCircle2, ShoppingCart, User,
-  Send, ArrowRight, ShieldCheck, Heart, Terminal, Sliders, Globe, Trash2
+  Send, ArrowRight, ShieldCheck, Heart, Terminal, Sliders, Globe, Trash2, Mic
 } from "lucide-react";
 import StudioWorkspace from "./components/StudioWorkspace";
 import VirtualTryOnStudio from "./components/VirtualTryOnStudio";
@@ -11,6 +11,7 @@ import GenAiLookComposer from "./components/GenAiLookComposer";
 import PerfectApiConsole from "./components/PerfectApiConsole";
 import AnalyticsDashboard from "./components/AnalyticsDashboard";
 import LivePriceSearch from "./components/LivePriceSearch";
+import DemoTeleprompterHud from "./components/DemoTeleprompterHud";
 
 export interface CartItem {
   id: string;
@@ -26,6 +27,7 @@ export default function App() {
   >("tryon");
 
   const [activeDemo, setActiveDemo] = useState<boolean>(false);
+  const [showTeleprompter, setShowTeleprompter] = useState<boolean>(false);
   const [showCartDrawer, setShowCartDrawer] = useState<boolean>(false);
   const [orderSuccessDetails, setOrderSuccessDetails] = useState<{
     orderId: string;
@@ -215,6 +217,18 @@ export default function App() {
           >
             <ShoppingCart className="w-4 h-4" />
             <span>Cart ({cartItems.length})</span>
+          </button>
+
+          <button
+            onClick={() => setShowTeleprompter(!showTeleprompter)}
+            className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-2 cursor-pointer shadow-lg ${
+              showTeleprompter
+                ? "bg-gradient-to-r from-pink-600 to-indigo-600 border-pink-400 text-white animate-pulse"
+                : "bg-pink-500/10 border-pink-500/40 text-pink-300 hover:bg-pink-500/20"
+            }`}
+          >
+            <Mic className="w-4 h-4 text-pink-400" />
+            <span>{showTeleprompter ? "Pitch HUD Active" : "Pitch Cue HUD"}</span>
           </button>
 
           <button
@@ -595,6 +609,13 @@ export default function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {showTeleprompter && (
+        <DemoTeleprompterHud
+          onClose={() => setShowTeleprompter(false)}
+          onNavigateModule={(mod) => setActiveModule(mod as any)}
+        />
       )}
     </div>
   );
